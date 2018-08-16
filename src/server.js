@@ -19,6 +19,11 @@ module.exports = function(){
 	pre_load("img", "fav_icon", "./src/image/fav_icon.png")
 	pre_load("img", "bar", "./src/image/bar.gif")
 	pre_load("img", "barGray", "./src/image/barGray.gif")
+	pre_load("img", "bottom_bar", "./src/image/bottom_bar.png")
+	pre_load("img", "sidebar", "./src/image/sidebar.png")
+	pre_load("img", "offline", "./src/image/offline.png")
+	pre_load("img", "online", "./src/image/online.png")
+	pre_load("img", "thread", "./src/image/thread.png")
 	
 	pre_load("js", "adminpanel", "./src/javascripts/adminpanel.js")
 	
@@ -31,6 +36,7 @@ module.exports = function(){
 	var page_logout = require("./pages/logout.js")
 	var page_reply = require("./pages/reply.js")
 	var page_admin = require("./pages/admin.js")
+	var page_profile = require("./pages/profile.js")
 	
 	var pw_encryption = "sha512WithRSAEncryption";
 	encryptHash = function(pass, salt) {
@@ -128,6 +134,15 @@ module.exports = function(){
 				if(a !== null) console.log("Error setting rank")
 			})
 		}
+		if(cmd[0] === "update" && cmd[1] === "post-count") {
+			database.run("update subforums set post_count = (select count(*) from threads where subforum=subforums.id and type=0 and deleted=0)", function(){
+				console.log("Updated subforum post count to correct numbers")
+				database.run("update users set posts = (select count(*) from threads where user=users.id and deleted=0)", function(){
+					console.log("Updated user post count to correct numbers")
+					console.log("Operation completed")
+				})
+			})
+		}
 	}
 	
 	database.get("select * from info where name='init'", function(a, b){
@@ -136,7 +151,7 @@ module.exports = function(){
 				database.run("create table info(name)", function(){
 					database.run("insert into info values('init')", function(){
 						database.run("create table subforums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, post_count integer, _order integer)", function(){
-							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, font integer, _order integer)", function(){
+							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, font integer, _order integer, deleted integer)", function(){
 								database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer)", function(){
 									database.run("create table session(user_id integer, expire_date integer, key text)", function(){
 										run()
@@ -199,6 +214,14 @@ module.exports = function(){
 		
 		return mth + " " + day + ", " + yer + " " + hr + ":" + mt + " " + ampm + " (" + minutes_ago + " " + _data + " ago)"
 	}
+	
+	/*
+	if needed:
+	
+	res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+	res.setHeader("Pragma", "no-cache");
+	res.setHeader("Expires", "0");
+	*/
 	
 	function server_(req, res) {
 		var d = domain.create()
@@ -274,6 +297,16 @@ module.exports = function(){
 						"Content-Type": "image/gif"
 					})
 					res.end(pre_loaded_images["barGray"], "binary");
+				} else if(pathname == "images/bottom_bar.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["bottom_bar"], "binary");
+				} else if(pathname == "images/sidebar.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["sidebar"], "binary");
 				} else if(pathname == "scripts/adminpanel.js") {
 					if(userinfo.top_rank === false){
 						res.writeHead(302, {
@@ -287,6 +320,21 @@ module.exports = function(){
 						})
 						res.end(pre_loaded_content["adminpanel"], "binary");
 					}
+				} else if(pathname == "images/offline.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["offline"], "binary");
+				} else if(pathname == "images/online.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["online"], "binary");
+				} else if(pathname == "images/thread.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["thread"], "binary");
 				} else if(pathname.startsWith("sf/")){
 					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo)
 				} else if(pathname.startsWith("thread/")) {
@@ -311,6 +359,8 @@ module.exports = function(){
 					if(userinfo.top_rank === true){
 						page_admin(req, res, swig, userinfo, database, date_created, querystring)
 					}
+				} else if(pathname.startsWith("profile/")) {
+					page_profile(req, res, swig, database, pathname.substr(8), date_created, userinfo)
 				} else {
 					res.statusCode = 404;
 					res.end("404: Page does not exist")

@@ -6,11 +6,12 @@
 	</h1>
 	<button onclick="location.href = '/post/{{subforum_id}}';">Create new thread</button>
 	<br>
-	<table style="width: 100%; table-layout: fixed;" border=1>
+	{% if pagebar.threadcount != 0 %}
+	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
 			<tr>
-				<th class="sfhead">
-					Name
+				<th class="sfhead" colspan="2">
+					Threads
 				</th>
 				<th class="sfhead" style="width: 200px;">
 					Posted by
@@ -18,14 +19,116 @@
 			</tr>
 			{% for label in threads %}
 			<tr style="height: 30px;">
+				<td style="width: 30px; background-color: #cee7ff;">
+					<img src="/images/thread.png">
+				</td>
 				<td style="background-color: #b9dcff; word-break: break-all;">
-					<a href="/thread/{{label.id}}">{{label.title}}</a>
+					<a href="/thread/{{label.id}}" class="rowText">{{label.title}}</a>
 				</td>
 				<td style="background-color: #cee7ff; word-break: break-all;">
-					{{label.postedby}}
+					<a href="/profile/{{label.userid}}" class="rowText">{{label.postedby}}</a>
 				</td>
 			</tr>
 			{% endfor %}
 		</tbody>
 	</table>
+	{% else %}
+		<p>There are no threads</p>
+	{% endif %}
+	
+	{% if pagebar.pagebarVisible %}
+	<div style="float:right">
+		Go to page:&nbsp;
+		{% if pagebar.page != 1 %}
+			<a href="{{pagebar.path}}/{{pagebar.prevPage}}">Previous</a>
+		{% endif %}
+		
+		{% if pagebar.dddA %}
+			{% if pagebar.page != "1" %}<a href="{{pagebar.path}}">1</a>&nbsp;
+			{% else %}
+				<b>1<b>&nbsp;
+			{% endif %}
+			
+			{% if pagebar.page != "2" %}<a href="{{pagebar.path}}/2">2</a>&nbsp;
+			{% else %}
+				<b>2<b>&nbsp;
+			{% endif %}
+			
+			{% if pagebar.page != "3" %}<a href="{{pagebar.path}}/3">3</a>&nbsp;
+			{% else %}
+				<b>3<b>&nbsp;
+			{% endif %}
+			...&nbsp;
+		{% endif %}
+		
+		{% for data in pagebar.pages %}
+			{% if pagebar.page != data %}
+			<a href="{{pagebar.path}}{% if data != 1 %}/{{data}}{% endif %}">{{data}}</a>&nbsp;
+			{% else %}
+			<b>{{data}}</b>
+			{% endif %}
+		{% endfor %}
+		
+		{% if pagebar.dddB %}
+			...&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.a}}">{{pagebar.a}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.b}}">{{pagebar.b}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.c}}">{{pagebar.c}}</a>
+		{% endif %}
+		
+		{% if pagebar.page < pagebar.pageCount %}
+			<a href="{{pagebar.path}}/{{pagebar.nextPage}}">Next</a>
+		{% endif %}
+		<br>
+		<div style="float:right">
+			<input id="pagenumber" maxlength="10" style="width: 100px"></input>&nbsp;<button onclick="updpage()">Goto page</button>
+			<br>
+			<p id="err">&nbsp;</p>
+		</div>
+	</div>
+	{% endif %}
+{% endblock %}
+
+{% block scriptcontent %}
+	<script>
+		var decs = "0123456789"
+		function updpage(){
+			var nbr = document.getElementById("pagenumber").value
+			var err = document.getElementById("err")
+			for(var i = 0; i < nbr.length; i++){
+				var isNumber = false;
+				for(var g = 0; g < 10; g++){
+					var c = nbr.charAt(i);
+					if(c == g){
+						isNumber = true;
+						break
+					}
+				}
+				if(!isNumber) {
+					err.innerText = "Invalid number"
+					return
+				}
+			}
+			var path = window.location.pathname.split("/");
+			var base = [path[0], path[1], path[2]].join("/")
+			
+			var page = path[3]
+			if(page === undefined || page === "" || isNaN(page)){
+				page = 1
+			}
+			if(nbr === undefined || nbr === "" || isNaN(nbr)){
+				nbr = 1
+			}
+			if(nbr == "0") {
+				nbr = 1
+			}
+			if(page != nbr){
+				if(nbr == 1) {
+					window.location.pathname = base
+				} else {
+					window.location.pathname = base + "/" + nbr
+				}
+			}
+		}
+	</script>
 {% endblock %}

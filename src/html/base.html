@@ -17,18 +17,20 @@
 				width: 180px;
 				height: 100%;
 				background-color: #DDEEFF;
-				padding: 13px;
 				overflow: hidden;
+				padding: 13px;
+				background-image: url("/images/sidebar.png");
 			}
 			#content {
 				padding: 7px;
 			}
-			.sidebarContentTitlebar {
+			.sidebarContentTitlebar, .sfhead {
 				color: #FFFFFF;
 				font-family: 'Verdana';
 				font-size: 12px;
 				background-image: url("/images/bar.gif");
 				height: 19px;
+				background-color: #4455AA;
 			}
 			.sidebarTable {
 				background-color: #FFFFFF;
@@ -44,14 +46,26 @@
 			.sidebarSeparator {
 				height: 13px;
 			}
-			.sfhead {
-				background-color: #66ffff;
+			.sidebarTablePanel {
+				 margin: 4px;
+			}
+			tr {
+				margin: 4px;
+			}
+			.rowText {
+				margin-left: 3px;
+			}
+			.loginLabel {
+				font-family: 'Verdana';
+				font-size: 10px;
+			}
+			.thread_bar {
+				background-image: url("/images/bottom_bar.png");
+				height: 19px;
 			}
 		</style>
 		
-		<script>
-			{% block scriptcontent %}{% endblock %}
-		</script>
+		{% block scriptcontent %}{% endblock %}
 	</head>
 	<body style="height: 100%">
 		<table style="width: 100%; height: 100%;">
@@ -88,9 +102,30 @@
 										<th class='sidebarTablePanelHolder'>
 											<div class='sidebarTablePanel' style="text-align: left;">
 												<form method="post" action="/login">
-													<label>Username:</label><input type="text" name="user" style="width: 90px"><br>
-													<label>Password:</label><input type="password" name="pass" style="width: 90px"><br>
+												
+												<table style="width: 100%">
+													<tbody>
+														<tr>
+															<td>
+																<span class="loginLabel">Username:&nbsp;</span>
+															</td>
+															<td>
+																<input type="text" name="user" style="width: 96%">
+															</td>
+														</tr>
+														<tr>
+															<td>
+																<span class="loginLabel">Password:&nbsp;</span>
+															</td>
+															<td>
+																<input type="password" name="pass" style="width: 96%">
+															</td>
+														</tr>
+													</tbody>
+												</table>
+												
 													<input type="submit" value="Login" style="float:right;">
+													
 												</form>
 												<a href="/register" style="color:blue;">Create an account</a>
 											</div>

@@ -9,7 +9,7 @@ window.onload = function(){
 var editMode = null;
 
 function addsubforum(){
-	if(editMode == 2) return
+	if(editMode !== null && editMode !== 1) return
 	editMode = 1;
 	var idCount = parseInt(document.getElementById("sfc").innerText)
 	addedTotal++
@@ -63,10 +63,31 @@ function sendchanges(){
 		
 		request.send("newsubforums=" + encodeURIComponent(JSON.stringify(newSFS)));
 	}
+	if(editMode == 2){
+		var ar = [];
+		for(i in sfedit_inputs){
+			ar.push([
+				sfedit_inputs[i][0],
+				sfedit_inputs[i][1].value,
+				sfedit_inputs[i][2].value,
+				sfedit_inputs[i][3].value
+			])
+		}
+		
+		var request = new XMLHttpRequest();
+		request.open('POST', window.location.pathname, true);
+
+		request.onload = function() {
+			window.location.reload()
+		};
+		
+		request.send("editedsfs=" + encodeURIComponent(JSON.stringify(ar)));
+	}
 }
 
+var sfedit_inputs = [];
 function editsubforums(){
-	if(editMode == 1) return
+	if(editMode !== null) return
 	editMode = 2
 	var chil = subforum_rows.children;
 	for(var i = 0; i < chil.length; i++){
@@ -92,6 +113,8 @@ function editsubforums(){
 			colChils[1].appendChild(input1)
 			colChils[2].appendChild(input2)
 			colChils[5].appendChild(input3)
+			
+			sfedit_inputs.push([colChils[0].innerText, input1, input2, input3])
 		}
 	}
 }

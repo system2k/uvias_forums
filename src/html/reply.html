@@ -4,6 +4,7 @@
 	<h1>
 		Subforums >> {{subforum_name}} >> {{thread_title}} >> Reply to post
 	</h1>
+	<div style="display:none;" id="previous_thread_url">{{cancel_url}}</div>
 	<table style="width: 100%" border=1>
 		<tbody>
 			<tr>
@@ -12,15 +13,43 @@
 				</th>
 			</tr>
 			<tr style="height: 512px;">
-				<td style="height: 512px;">
-					<div style="vertical-align: top; height: 100%">
-						Title: <input style="width: 90%" id="title" value="{{reply_title}}">
-						<br>
-						<label style="vertical-align: top;">Body: </label><textarea id="body" style="width: 90%; height: 90%"></textarea>
-						<br>
-						<button style="float:right" onclick="postreply();">Post</button>
-						<input type="checkbox" id="font"> Consolas
-					</div>
+				<td style="height: 512px; background-color: #DDEEFF">
+					<table style="width: 100%; height: 512px; margin: 5px;">
+						<tbody>
+							<tr style="height: 1px;">
+								<td style="text-align: right; padding-right: 5px; adding-bottom: 8px">
+									Title: 
+								</td>
+								<td style="padding-bottom: 8px;">
+									<input style="width: 90%" id="title" value="{{reply_title}}">
+								</td>
+							</tr>
+							<tr>
+								<td style="vertical-align:top; width: 50px; text-align: right">
+									<label style="vertical-align: top; padding-right: 5px">Body: </label>
+								</td>
+								<td style="height: 100%">
+									<textarea id="body" style="width: 90%; height: 100%"></textarea>
+								</td>
+							</tr>
+							<tr style="height: 1px">
+								<td style="width: 100px"></td>
+								<td>
+									<input type="checkbox" id="font" style="margin-left: 2px">&nbsp;Consolas
+								</td>
+							</tr>
+							<tr style="height: 1px;">
+								<td colspan="2">
+									<div style="width: 90%; height: 1px">
+										<div style="float:right;">
+											<button style="padding: 1px 17px;" onclick="cancel();">Cancel</button>
+											<button style="padding: 1px 17px;" onclick="postreply();">Reply to post</button>
+										</div>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</td>
 			</tr>
 		</tbody>
@@ -28,14 +57,19 @@
 {% endblock %}
 
 {% block scriptcontent %}
-	function postreply(){
-		var request = new XMLHttpRequest();
-		request.open('POST', window.location.pathname, true);
+	<script>
+		function postreply(){
+			var request = new XMLHttpRequest();
+			request.open('POST', window.location.pathname, true);
 
-		request.onload = function() {
-			window.location.pathname = request.responseText
-		};
+			request.onload = function() {
+				window.location.pathname = request.responseText
+			};
 
-		request.send("title=" + encodeURIComponent(document.getElementById("title").value) + "&body=" + encodeURIComponent(document.getElementById("body").value) + "&consolas=" + document.getElementById("font").checked);
-	}
+			request.send("title=" + encodeURIComponent(document.getElementById("title").value) + "&body=" + encodeURIComponent(document.getElementById("body").value) + "&consolas=" + document.getElementById("font").checked);
+		}
+		function cancel(){
+			window.location.pathname = document.getElementById("previous_thread_url").innerText
+		}
+	</script>
 {% endblock %}

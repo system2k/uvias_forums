@@ -1,9 +1,17 @@
 module.exports = function(req, res, database, id, parseCookie, swig, querystring, userinfo){
+	if(userinfo.loggedin == false){
+		res.end("You need to be logged in")
+		return
+	}
 	var thread;
 	
-	database.get("select * from threads where id=?", [id], function(a, post){
-		thread = post
-		thread_retrieved()
+	database.get("select * from threads where id=? and deleted=0", [id], function(a, post){
+		if(post){
+			thread = post
+			thread_retrieved()
+		} else {
+			res.end("Cannot reply to non-existant thread")
+		}
 	})
 	
 	
@@ -22,7 +30,8 @@ module.exports = function(req, res, database, id, parseCookie, swig, querystring
 						subforum_name: b.name,
 						logged_in: userinfo.loggedin,
 						thread_title: thread.title,
-						reply_title: "RE: " + thread.title
+						reply_title: "RE: " + thread.title,
+						cancel_url: "/thread/" + id
 					}, userinfo));
 					res.write(output)
 					res.end()
@@ -54,7 +63,7 @@ module.exports = function(req, res, database, id, parseCookie, swig, querystring
 							} else {
 								consolas = 0;
 							}
-							database.run("insert into threads values(null, ?, ?, ?, ?, ?, 1, ?, ?, null)", [thread.subforum, data.title, data.body, Date.now(), userinfo.user_id, id, consolas], function(a,b) {
+							database.run("insert into threads values(null, ?, ?, ?, ?, ?, 1, ?, ?, null, 0)", [thread.subforum, data.title, data.body, Date.now(), userinfo.user_id, id, consolas], function(a,b) {
 								database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
 									database.run("update threads set _order = (select _order+1 as ord from threads where subforum=(select subforum from threads where id=?) order by _order desc limit 1) where id=?", [id, id], function(){
 										res.write("thread/" + id)

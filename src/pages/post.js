@@ -1,4 +1,8 @@
 module.exports = function(req, res, swig, database, querystring, id, parseCookie, userinfo) {
+	if(userinfo.loggedin == false){
+		res.end("You need to be logged in")
+		return
+	}
 	var method = req.method.toLowerCase()
 	
 	if(method == "get"){
@@ -11,7 +15,8 @@ module.exports = function(req, res, swig, database, querystring, id, parseCookie
 			} else {
 				var output = tmp(Object.assign({
 					subforum_name: b.name,
-					logged_in: userinfo.loggedin
+					logged_in: userinfo.loggedin,
+					cancel_url: "/sf/" + id
 				}, userinfo));
 				res.write(output)
 				res.end()
@@ -43,7 +48,7 @@ module.exports = function(req, res, swig, database, querystring, id, parseCookie
 						consolas = 0;
 					}
 					database.get("select count(*) as cnt from threads where subforum=?", [id], function(a,cnt){
-						database.run("insert into threads values(null, ?, ?, ?, ?, ?, 0, null, ?, ?)", [id, data.title, data.body, Date.now(), userinfo.user_id, consolas, parseInt(cnt.cnt)+1], function(a,b) {
+						database.run("insert into threads values(null, ?, ?, ?, ?, ?, 0, null, ?, ?, 0)", [id, data.title, data.body, Date.now(), userinfo.user_id, consolas, parseInt(cnt.cnt)+1], function(a,b) {
 							database.get("select post_count from subforums where id=?", [id], function(a,b){
 								database.run("update subforums set post_count=? where id=?", [parseInt(b.post_count)+1, id], function(a,b){
 									database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){

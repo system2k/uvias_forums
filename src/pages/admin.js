@@ -61,6 +61,25 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 					} else {
 						step()
 					}
+				} else if(data.editedsfs) {
+					var edits = JSON.parse(data.editedsfs)
+					
+					var i = 0;
+					function step(){
+						database.run("UPDATE subforums SET name=?, desc=?,_order=? WHERE id=?", [edits[i][1], edits[i][2], edits[i][3], edits[i][0]], function(){
+							i++;
+							if(edits.length > i){
+								step()
+							} else {
+								res.end()
+							}
+						})
+					}
+					if(edits.length == 0){
+						res.end()
+					} else {
+						step()
+					}
 				} else {
 					res.end()
 				}
