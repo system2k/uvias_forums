@@ -97,7 +97,7 @@ module.exports = function(req, res, userinfo){
 						var desc = args.desc
 						var forum_group = args.forum_group
 						
-						database.run("insert into forums values(null, ?, ?, ?, ?, ?, (SELECT (CASE WHEN EXISTS(SELECT id from forums where forum_group=? limit 1) THEN (select _order from forums where forum_group=? order by _order desc limit 1) ELSE 0 END)+1 as ord), ?, 0)", [name, desc, Date.now(), 0, 0, forum_group, forum_group, forum_group], function(a,b){
+						database.run("insert into forums values(null, ?, ?, ?, ?, ?, (SELECT (CASE WHEN EXISTS(SELECT id from forums where forum_group=? limit 1) THEN (select _order from forums where forum_group=? order by _order desc limit 1) ELSE 0 END)+1 as ord), ?)", [name, desc, Date.now(), 0, 0, forum_group, forum_group, forum_group], function(a,b){
 							res.writeHead(302, {
 								"Location": "/"
 							})
@@ -122,7 +122,7 @@ module.exports = function(req, res, userinfo){
 						
 					} else if(data.command == "create_forum_group") {
 						var name = args.name
-						database.run("insert into forum_groups values(null, ?, ?, (select _order+1 from forum_groups order by _order desc limit 1), 0)", [name, Date.now()], function(){
+						database.run("insert into forum_groups values(null, ?, ?, (select _order+1 from forum_groups order by _order desc limit 1))", [name, Date.now()], function(){
 							res.writeHead(302, {
 								"Location": "/"
 							})
@@ -135,6 +135,15 @@ module.exports = function(req, res, userinfo){
 						var id = args.id
 						var forum_group = args.forum_group
 						database.run("update forums set name=?, desc=?, forum_group=?, _order=(SELECT (CASE WHEN EXISTS(SELECT id from forums where forum_group=? limit 1) THEN (select _order from forums where forum_group=? order by _order desc limit 1) ELSE 0 END)+1 as ord) where id=?", [name, desc, forum_group, forum_group, forum_group, id], function(){
+							res.writeHead(302, {
+								"Location": "/admin/editforums"
+							})
+							res.end()
+						})
+						
+					} else if(data.command == "delete_forum") {
+						var id = args.id
+						database.run("delete from forums where id=?", id, function(){
 							res.writeHead(302, {
 								"Location": "/admin/editforums"
 							})

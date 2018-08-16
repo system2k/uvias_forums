@@ -93,6 +93,17 @@
 				background-image: url('/images/bar.gif');
 				color: white;
 				height: 25px;
+				font-family: 'Verdana';
+				font-size: 12px;
+				padding-left: 4px;
+				padding-right: 4px;
+			}
+			.location {
+				word-break: break-all;
+				display: block;
+				min-height: 30px;
+				font-family: Arial;
+				font-weight: bold;
 			}
 		</style>
 		
@@ -117,12 +128,19 @@
 					loginForm()
 				}
 			}
-			function FormSubmit(command, arguments, location) {
+			function FormSubmit(command, arguments_, location) {
+				if(document.getElementById("loginUser")) {
+					document.getElementById("loginUser").disabled = true
+				}
+				if(document.getElementById("loginPass")) {
+					document.getElementById("loginPass").disabled = true
+				}
+			
 				var str = ""
-				var len = Object.keys(arguments).length
+				var len = Object.keys(arguments_).length
 				var index = 0;
-				for(i in arguments){
-					str += encodeURIComponent(i) + "=" + encodeURIComponent(arguments[i])
+				for(i in arguments_){
+					str += encodeURIComponent(i) + "=" + encodeURIComponent(arguments_[i])
 					if(index < len - 1) str += "&"
 					index++
 				}
@@ -153,11 +171,17 @@
 										<tr>
 											<th class='sidebarTablePanelHolder'>
 												<div class='sidebarTablePanel' style="text-align: center; font-family: Arial;">
+													<span style="float:left; font-size: 0.8em; word-break: break-all;">Logged in as: {{username}}</span>
+													<br>
 													<a href="/logout" class="sblink">Log out</a>
 													<br>
 													<a href="/myforums" class="sblink">My forums</a>
 													<br>
 													<a href="/members" class="sblink">Members</a>
+													<br>
+													<a href="/search" class="sblink">Search</a>
+													<br>
+													<a href="/inbox" class="sblink">Inbox</a>
 													{% if top_rank %}
 													<br>
 													<a href="/admin" class="sblink">Admin panel</a>
@@ -167,7 +191,8 @@
 										</tr>
 									</tbody>
 								</table>
-								{% else %}
+								<div class='sidebarSeparator'></div>
+								{% elseif !login_page %}
 								<table class='sidebarTable'>
 									<tbody>
 										<tr>
@@ -204,10 +229,10 @@
 										</tr>
 									</tbody>
 								</table>
+								<div class='sidebarSeparator'></div>
 								{% endif %}
 								
 								{% if announcement != "No announcement" %}
-								<div class='sidebarSeparator'></div>
 								
 								<table class='sidebarTable'>
 									<tbody>
@@ -223,10 +248,8 @@
 										</tr>
 									</tbody>
 								</table>
-								{% endif %}
-								
-								
 								<div class='sidebarSeparator'></div>
+								{% endif %}
 								
 								<table class='sidebarTable'>
 									<tbody>
@@ -237,6 +260,10 @@
 											<th class='sidebarTablePanelHolder'>
 												<div class='sidebarTablePanel'>
 													<a href="/" class="sblink">Home - Forums</a>
+													{% if !logged_in %}
+													<br>
+													<a href="/login" class="sblink">Login</a>
+													{% endif %}
 												</div>
 											</th>
 										</tr>

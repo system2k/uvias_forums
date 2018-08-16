@@ -18,15 +18,15 @@ var Month = 2628002880
 var Year = 31536034560
 var Decade = 315360345600
 
-module.exports = function(req, res) {
+module.exports = function(req, res, userinfo) {
 	var method = req.method.toLowerCase()
 	
 	if(method == "get") {
 		var tmp = swig.compileFile("./src/html/login.html")
 		
 		var output = tmp(Object.assign({
-			
-		}, {}));
+			login_page: true
+		}, userinfo));
 		
 		res.write(output)
 		res.end()

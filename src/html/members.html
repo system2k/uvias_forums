@@ -1,22 +1,48 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<h1>
-		Members
-	</h1>
+	<span class="location">
+		Member list
+	</span>
 	
 	<table class="defaultTable">
-		<tbody id="forum_rows">
-			<tr>
+		<tbody>
+			<tr style="text-align: left;">
 				<th>
-					Member list
+					ID
+				</th>
+				<th>
+					Username
+				</th>
+				<th>
+					Date joined
+				</th>
+				<th>
+					Last login
+				</th>
+				<th>
+					Post count
 				</th>
 			</tr>
-			<tr>
+			{% for label in users %}
+			<tr style="background-color: #cee7ff;">
+				<td style="width: 1px;">
+					{{label.id}}
+				</td>
 				<td>
-					Work in progress
+					{{label.username}}
+				</td>
+				<td>
+					{{label.date_joined}}
+				</td>
+				<td>
+					{{label.last_login}}
+				</td>
+				<td>
+					{{label.posts}}
 				</td>
 			</tr>
+			{% endfor %}
 		</tbody>
 	</table>
 {% endblock %}

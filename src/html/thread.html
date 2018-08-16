@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<h1 style="word-break: break-all;">
+	<span class="location">
 		Forums >> {{f_g.name}} >> {{forum_name}} >> {{thread_title}}
-	</h1>
+	</span>
 	
 	<input type="checkbox" id="track" style="margin-left: 2px" onclick="trackthread()"{% if tracked %} checked{% endif %}>&nbsp;Tracked
 	
@@ -197,6 +197,13 @@
 			request.send()
 		}
 		function changeMode() {
+			if(document.getElementById("loginUser")) {
+				document.getElementById("loginUser").disabled = true
+			}
+			if(document.getElementById("loginPass")) {
+				document.getElementById("loginPass").disabled = true
+			}
+			
 			var form = document.FORM
 			form.submit()
 		}

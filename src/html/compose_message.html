@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<span class="location">
+		Write message
+	</span>
+	
+	<table class="defaultTable">
+		<tbody id="forum_rows" style="background-color: #DDEEFF;">
+			<tr>
+				<th colspan="2">
+					Write message to: {{to_username}}
+				</th>
+			</tr>
+			<tr>
+				<td>
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right;">
+									Subject:
+								</td>
+								<td>
+									<input style="width: 100%">
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									Body:
+								</td>
+								<td>
+									<textarea cols="90" rows="20"></textarea>
+								</td>
+							</tr>
+							<tr>
+								<td style="width: 100px;">
+								</td>
+								<td>
+									<button type="button" style="padding: 2px 16px; float: right;">Send message</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}

@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+	<span class="location">
+		Users >> {{username}}
+	</span>
+	
 	<table class="defaultTable">
 		<tbody>
 			<tr>
@@ -55,6 +59,13 @@
 									{% else %}
 									Unknown
 									{% endif %}
+								</td>
+							</tr>
+							<tr>
+								<td>
+								</td>
+								<td>
+									<button type="button" style="padding: 2px 16px; float: right;" onclick="window.location.pathname='/compose_message/{{user.id}}'">Write message to user</button>
 								</td>
 							</tr>
 						</tbody>

@@ -2,20 +2,6 @@ function escapeBody(body){
 	return body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")
 }
 
-var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-var _data_ago = ["minute", "hour", "day", "month", "year"]
-function joindate_label(timestamp){
-	timestamp = parseInt(timestamp)
-	timestamp = new Date(timestamp)
-	
-	var mth = Month[timestamp.getMonth()]
-	var day = ("0" + timestamp.getDate()).slice(-2)
-	var yer = timestamp.getFullYear()
-	
-	
-	return mth + " " + day + ", " + yer
-}
-
 function navigate(nav, path) {
 	for(var i = 1; i < path.length; i++){
 		var ch = nav.children;
@@ -35,9 +21,11 @@ function navigate(nav, path) {
 
 function ThreadedCookie(res, displayMode, cookie) {
 	if(displayMode == 1) {
-		res.writeHead(200, {
-			"Set-Cookie": "displayMode=" + displayMode + "; expires=" + cookieExpireDate(Date.now() + (1000*60*60*24*365)) + ";"
-		})
+		if(cookie.displayMode !== 1){
+			res.writeHead(200, {
+				"Set-Cookie": "displayMode=" + displayMode + "; expires=" + cookieExpireDate(Date.now() + (1000*60*60*24*365)) + ";"
+			})
+		}
 	} else {
 		if(cookie.displayMode !== undefined) {
 			res.writeHead(200, {
@@ -61,6 +49,57 @@ function cookieExpireDate(timestamp) {
 
 	var compile = _DayOfWeek + ", " + _Day + " " + _Month + " " + _Year + " " + _Hour + ":" + _Minute + ":" + _Second + " UTC";
 	return compile
+}
+
+function comparePaths(a,b) {
+	for(var i = 0, total = Math.max(a.length, b.length); i < total; i++){
+		var c1 = a[i]
+		var c2 = b[i]
+		if(c1 === undefined) {
+			return "<" // a < b
+		}
+		if(c2 === undefined) {
+			return ">" // a > b
+		}
+		if(c1 > c2) {
+			return ">" // a > b
+		}
+		if(c1 < c2) {
+			return "<" // a < b
+		}
+	}
+	return "=" // a = b
+}
+
+function sort_comment_paths(list) { // Looks like selection sort
+	var newList = []
+	
+	var least = list[0];
+	for(var i = 0; i < list.length; i++){
+		if(comparePaths(list[i], least) == "<") {
+			least = list[i]
+		}
+	}
+	
+	var current = least
+	newList.push(current)
+	for(var i = 0; i < list.length; i++){
+		var lst = current
+		var changes = false;
+		for(var t = 0; t < list.length; t++){
+			if(comparePaths(list[t], current) == ">") {
+				if(!(changes && comparePaths(list[t], lst) == ">")) {
+					lst = list[t]
+					changes = true
+				}
+			}
+		}
+		if(changes) {
+			current = lst
+			newList.push(current)
+		}
+	}
+	return newList
 }
 
 module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder) {
@@ -395,19 +434,13 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 										})
 										var max_threshold = 0
 										function _cont(){
-											var dumped = []
-											function dmp(tr) {
-												dumped.push(tr.path)
-												for(i in tr.children){
-													dmp(tr.children[i])
-												}
-											}
-											dmp(tree)
+											var sorted = sort_comment_paths(paths)
+											
 											var PostIndex = 0;
-											for(i in dumped){
-												var d = dumped[i].length - 1
+											for(i in sorted){
+												var d = sorted[i].length - 1
 												d *= 50
-												var data = navigate(tree, dumped[i])
+												var data = navigate(tree, sorted[i])
 												
 												var parent = data.path
 												if(parent.length === 1) {
@@ -415,7 +448,7 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 												} else {
 													parent = parent[parent.length-2]
 												}
-												var TH = dumped[i].length - 1
+												var TH = sorted[i].length - 1
 												if(TH > max_threshold) {
 													max_threshold = TH
 												}

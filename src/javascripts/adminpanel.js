@@ -159,3 +159,11 @@ function upd_forum(){
 		forum_group: document.getElementById("forum_group").value
 	}, "/admin")
 }
+function del_forum(){
+	var s = confirm("Are you sure you want to delete this forum?")
+	if(s) {
+		FormSubmit("delete_forum", {
+			id: document.getElementById("forum_id").innerText
+		}, "/admin")
+	}
+}

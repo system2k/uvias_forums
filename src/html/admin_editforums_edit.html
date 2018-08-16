@@ -2,9 +2,9 @@
 
 {% block content %}
 	<script src="/scripts/adminpanel.js"></script>
-	<h1>
+	<span class="location">
 		Admin Panel >> Forums >> Edit forums >> {{forum_group.name}} >> {{forum.name}}
-	</h1>
+	</span>
 	<div id="forum_group_id" style="display: none;">{{forum_group.id}}</div>
 	
 	<div id="forum_id" style="display: none;">{{forum.id}}</div>
@@ -92,6 +92,7 @@
 							
 							<tr>
 								<td>
+									<a href="javascript:del_forum()">Delete</a>
 								</td>
 								<td>
 									<button type="button" style="padding: 2px 16px; float: right;" onclick="upd_forum()">Update</button>

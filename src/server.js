@@ -107,7 +107,10 @@ function beginServer(){
 		page_profile: "./pages/profile.js",
 		page_forum_group: "./pages/forum_group.js",
 		page_myforums: "./pages/myforums.js",
-		page_members: "./pages/members.js"
+		page_members: "./pages/members.js",
+		page_search: "./pages/search.js",
+		page_inbox: "./pages/inbox.js",
+		page_compose_message: "./pages/compose_message.js"
 	}
 	
 	for(i in pages){
@@ -205,6 +208,19 @@ function beginServer(){
 		return compile
 	}
 	
+	var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+	joindate_label = function(timestamp){
+		timestamp = parseInt(timestamp)
+		timestamp = new Date(timestamp)
+		
+		var mth = Month[timestamp.getMonth()]
+		var day = ("0" + timestamp.getDate()).slice(-2)
+		var yer = timestamp.getFullYear()
+		
+		
+		return mth + " " + day + ", " + yer
+	}
+	
 	var stdin = process.stdin;
 	stdin.setRawMode(true);
 	stdin.resume();
@@ -280,7 +296,7 @@ function beginServer(){
 			})
 			
 			function sd_forum1(){
-				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1, 0)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1], function(e){
+				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1], function(e){
 					if(e) {
 						log("An error occured while creating sample forum #1:", "red")
 						console.log(e)
@@ -292,7 +308,7 @@ function beginServer(){
 			}
 			
 			function sd_forum2(){
-				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1, 0)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2], function(e){
+				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2], function(e){
 					if(e) {
 						log("An error occured while creating sample forum #2:", "l_red")
 						console.log(e)
@@ -338,7 +354,7 @@ function beginServer(){
 				}
 				
 				function db_forums(){
-					database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer, deleted integer)", function(){
+					database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)", function(){
 						console.log("Created 'forums'")
 						db_threads()
 					})
@@ -373,14 +389,14 @@ function beginServer(){
 				}
 				
 				function db_forum_groups(){
-					database.run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer, deleted integer)", function(){
+					database.run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)", function(){
 						console.log("Created 'forum_groups'")
 						db_forum_group_main()
 					})
 				}
 				
 				function db_forum_group_main(){
-					database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?, 0)", ["Main forums", Date.now(), 1], function(e){
+					database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1], function(e){
 						console.log("Created 'Main forums' forum group")
 						db_tracking()
 					})
@@ -388,6 +404,12 @@ function beginServer(){
 				function db_tracking(){
 					database.run("create table tracking(user integer, thread integer, date integer)", function(){
 						console.log("Created 'tracking'")
+						db_messages()
+					})
+				}
+				function db_messages(){
+					database.run("create table messages(id integer, date integer, from integer, to integer, subject text, body text)", function(){
+						console.log("Created 'messages'")
 						log("Table creation complete.", "l_green")
 						begin()
 					})
@@ -479,10 +501,11 @@ function beginServer(){
 	}, 1000*60) // check every minute
 	
 	function checkPosNumber(n){ // check positive number
-		if(typeof n == "number" && !isNaN(n)) {
-			if(n >= 0) return true
+		if(typeof n == "number" && !isNaN(n) && n !== Infinity) {
+			return n >= 0
 		}
 		if(typeof n == "string") {
+			if(n === "") return false
 			for(var str = 0; str < n.length; str++){
 				var find = false;
 				for(var i = 0; i < 10; i++){
@@ -491,8 +514,11 @@ function beginServer(){
 						break
 					}
 				}
-				return find
+				if(!find) {
+					return false
+				}
 			}
+			return true
 		}
 		return false
 	}
@@ -544,27 +570,30 @@ function beginServer(){
 			database.get("select user_id from session where key=?", [sid], function(a, b){
 				var user_id = undefined
 				if(b){
-					user_id = b.user_id;
-					logged_in = user_id != undefined
-					var rank = 0;
-					userinfo = {
-						sid: sid,
-						user_id: user_id,
-						logged_in: logged_in,
-						top_rank: false,
-						page_path: path.href,
-						cookie: cookie,
-						announcement: cache_data.announcement
-					}
-					online_users[user_id] = Date.now()
-					if(logged_in) {
-						database.get("select rank from users where id=?", [user_id], function(a, b){
-							userinfo.top_rank = b.rank == 1 || b.rank == 2
+					database.get("select username from users where id=?", b.user_id, function(e, usr){
+						user_id = b.user_id;
+						logged_in = user_id != undefined
+						var rank = 0;
+						userinfo = {
+							sid: sid,
+							user_id: user_id,
+							logged_in: logged_in,
+							top_rank: false,
+							page_path: path.href,
+							cookie: cookie,
+							announcement: cache_data.announcement,
+							username: usr.username
+						}
+						online_users[user_id] = Date.now()
+						if(logged_in) {
+							database.get("select rank from users where id=?", [user_id], function(a, b){
+								userinfo.top_rank = b.rank == 1 || b.rank == 2
+								comp()
+							})
+						} else {
 							comp()
-						})
-					} else {
-						comp()
-					}
+						}
+					})
 				} else {
 					userinfo = {
 						sid: "",
@@ -620,7 +649,7 @@ function beginServer(){
 					page_post(req, res, pathname.substr("post/".length), userinfo)
 					
 				} else if(pathname == "login"){
-					page_login(req, res)
+					page_login(req, res, userinfo)
 					
 				} else if(pathname == "logout"){
 					page_logout(req, res)
@@ -637,6 +666,16 @@ function beginServer(){
 					
 				} else if(pathname == "members") {
 					page_members(req, res, userinfo)
+					
+				} else if(pathname == "search") {
+					page_search(req, res, userinfo)
+					
+				} else if(pathname == "inbox") {
+					page_inbox(req, res, userinfo)
+					
+				} else if(pathname.startsWith("compose_message/")) {
+					var id = pathname.substr("compose_message/".length)
+					page_compose_message(req, res, userinfo, id)
 					
 				} else if(pathname.startsWith("admin")) {
 					pathname = pathname.substr(5)
@@ -658,6 +697,7 @@ function beginServer(){
 						} else if(pathname.startsWith("editforums")) {
 							pathname = pathname.substr("editforums".length)
 							if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
+						
 							if(pathname == "") {
 								page_admin_editforums(req, res, userinfo)
 							} else if(checkPosNumber(pathname)) {
