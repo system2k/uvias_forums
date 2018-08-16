@@ -6,7 +6,7 @@ swig = require("swig")
 querystring = require("querystring")
 crypto = require("crypto")
 
-var port = 80
+var port = 1337
 postsPerPage = 30; // posts per page on threads
 database = new sql.Database("../database.db")
 console.log("Starting server...");

@@ -7,9 +7,22 @@
 	
 	<div style="font-family: Arial; font-weight: bold; font-size: 0.8em; margin-bottom: 4px; margin-left: 100px;">
 		{% for i in letters %}
-			<a href="" class="rowText">{{i}}</a> |
+			<a href="javascript:alpha('{{i}}')" class="rowText">{{i}}</a> |
 		{% endfor %}
 		<a href="" class="rowText">All</a>
+	</div>
+	
+	<div style="float: right">
+		<b>Sort:&nbsp;</b>
+		<select style="border-color:black; margin-bottom: 3px" name="displayMode" onchange="changeMode();">
+			<option value="flat">Date joined</option>
+			<option value="threaded">Last login</option>
+			<option value="threaded">Posts</option>
+		</select>
+		<select style="border-color:black; margin-bottom: 3px" name="sortOrder" onchange="changeMode();">
+			<option value="oldest_to_newest">Oldest to newest</option>
+			<option value="newest_to_oldest" {% if sortOrder == 1 %}selected{% endif %}>Newest to oldest</option>
+		</select>
 	</div>
 	
 	<table class="defaultTable">
@@ -66,6 +79,11 @@
 		function searchUser() {
 			FormSubmit("search", {
 				search: search_input.value
+			}, window.location.pathname)
+		}
+		function alpha(letter) {
+			FormSubmit("firstLetter", {
+				letter: letter
 			}, window.location.pathname)
 		}
 	</script>

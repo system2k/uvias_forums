@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Forum",
     "dependencies": {
-        "sqlite3": "*",
+        "sqlite3": "^4.0.1",
         "swig": "*"
     },
     "scripts": {

@@ -1,3 +1,10 @@
+var letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+function validateLetter(ltr) {
+	if(typeof ltr !== "string") return false
+	if(ltr.length !== 1) return false
+	return letters.indexOf(ltr) > -1
+}
+
 module.exports = async function(req, res, userinfo, results, last_search){
 	var method = req.method.toLowerCase()
 	
@@ -38,8 +45,8 @@ module.exports = async function(req, res, userinfo, results, last_search){
         });
 		req.on('end', function(){$(async function(){
 			var data = querystring.parse(queryData)
-			if(data.command == "search"){
-				var args = querystring.parse(decodeURIComponent(data.arguments))
+			var args = querystring.parse(decodeURIComponent(data.arguments))
+			if(data.command == "search") {
 				if(args.search !== undefined) {
 					var src = args.search.toUpperCase()
 					
@@ -56,6 +63,21 @@ module.exports = async function(req, res, userinfo, results, last_search){
 					module.exports({method: "GET"}, res, userinfo, results, args.search)
 				} else {
 					res.end()
+				}
+			} else if(data.command == "firstLetter") {
+				var ltr = args.letter;
+				if(!validateLetter(ltr)) {
+					res.end()
+				} else {
+					var results = []
+					await each("select * from users", function(e, data) {
+						var username = data.username.toUpperCase()
+						
+						if(username.charAt(0) === ltr) {
+							results.push(data)
+						}
+					})
+					module.exports({method: "GET"}, res, userinfo, results, args.search)
 				}
 			} else {
 				res.end()
