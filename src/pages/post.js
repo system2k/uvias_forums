@@ -39,26 +39,33 @@ module.exports = function(req, res, swig, database, querystring, id, parseCookie
 			if(!error){
 				req.on('end', function(){
 					var data = querystring.parse(queryData)
-					var consolas = data.consolas;
-					if(consolas == "false") {
-						consolas = 0;
-					} else if(consolas == "true") {
-						consolas = 1
-					} else {
-						consolas = 0;
-					}
-					database.get("select count(*) as cnt from threads where subforum=?", [id], function(a,cnt){
-						database.run("insert into threads values(null, ?, ?, ?, ?, ?, 0, null, ?, ?, 0)", [id, data.title, data.body, Date.now(), userinfo.user_id, consolas, parseInt(cnt.cnt)+1], function(a,b) {
-							database.get("select post_count from subforums where id=?", [id], function(a,b){
-								database.run("update subforums set post_count=? where id=?", [parseInt(b.post_count)+1, id], function(a,b){
-									database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
-										res.write("thread/" + this.lastID)
-										res.end()
+					if(data.command == "post_thread") {
+						var args = querystring.parse(decodeURIComponent(data.arguments))
+						var consolas = args.consolas;
+						if(consolas == "false") {
+							consolas = 0;
+						} else if(consolas == "true") {
+							consolas = 1
+						} else {
+							consolas = 0;
+						}
+						database.get("select count(*) as cnt from threads where subforum=?", [id], function(a,cnt){
+							database.run("insert into threads values(null, ?, ?, ?, ?, ?, 0, null, ?, ?, 0)", [id, args.title, args.body, Date.now(), userinfo.user_id, consolas, parseInt(cnt.cnt)+1], function(a,b) {
+								database.get("select post_count from subforums where id=?", [id], function(a,b){
+									database.run("update subforums set post_count=? where id=?", [parseInt(b.post_count)+1, id], function(a,b){
+										database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
+											res.writeHead(302, {
+												"Location": "/thread/" + this.lastID
+											})
+											res.end()
+										})
 									})
 								})
 							})
 						})
-					})
+					} else {
+						res.end("Invalid command")
+					}
 				});
 			}
 		} else {

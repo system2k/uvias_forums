@@ -63,120 +63,166 @@
 				background-image: url("/images/bottom_bar.png");
 				height: 19px;
 			}
+			a.rowText:hover, a.control:hover {
+				color: #DD6900
+			}
+			.sblink:link, .sblink:visited, .control:link, .control:visited {
+				color: blue
+			}
+			.sblink:active, a.control:active {
+				color: initial
+			}
 		</style>
 		
 		{% block scriptcontent %}{% endblock %}
+		
+		<script>
+			function loginForm() {
+				document.FORM.action="/login"
+				document.FORM.submit()
+			}
+			window.onload = function(){
+				var user = document.getElementById("loginUser")
+				var pass = document.getElementById("loginPass")
+				if(user && pass) {
+					user.onkeydown = loginEnter
+					pass.onkeydown = loginEnter
+				}
+			}
+			function loginEnter(e) {
+				var code = e.keyCode || e.which
+				if(code == 13 || code == 3) {
+					loginForm()
+				}
+			}
+			function FormSubmit(command, arguments, location) {
+				var str = ""
+				var len = Object.keys(arguments).length
+				var index = 0;
+				for(i in arguments){
+					str += encodeURIComponent(i) + "=" + encodeURIComponent(arguments[i])
+					if(index < len - 1) str += "&"
+					index++
+				}
+				var argumentString = encodeURIComponent(str)
+			
+				document.FORM.action = location;
+				document.getElementById("cmd").value = command;
+				document.getElementById("arg").value = argumentString;
+				document.FORM.submit();
+			}
+		</script>
 	</head>
 	<body style="height: 100%">
-		<table style="width: 100%; height: 100%;">
-			<tbody>
-				<tr>
-					<td style="width: 180px; height: 100%;">
-						<div id="sidebar">
-							{% if logged_in %}
-							<table class='sidebarTable'>
-								<tbody>
-									<tr>
-										<th class='sidebarContentTitlebar'>Account</th>
-									</tr>
-									<tr>
-										<th class='sidebarTablePanelHolder'>
-											<div class='sidebarTablePanel' style="text-align: left;">
-												<a href="/logout" style="color:blue;">Log out</a>
-												{% if top_rank %}
-												<br>
-												<a href="/admin" style="color:blue;">Admin panel</a>
-												{% endif %}
-											</div>
-										</th>
-									</tr>
-								</tbody>
-							</table>
-							{% else %}
-							<table class='sidebarTable'>
-								<tbody>
-									<tr>
-										<th class='sidebarContentTitlebar'>Login</th>
-									</tr>
-									<tr>
-										<th class='sidebarTablePanelHolder'>
-											<div class='sidebarTablePanel' style="text-align: left;">
-												<form method="post" action="/login">
-												
-												<table style="width: 100%">
-													<tbody>
-														<tr>
-															<td>
-																<span class="loginLabel">Username:&nbsp;</span>
-															</td>
-															<td>
-																<input type="text" name="user" style="width: 96%">
-															</td>
-														</tr>
-														<tr>
-															<td>
-																<span class="loginLabel">Password:&nbsp;</span>
-															</td>
-															<td>
-																<input type="password" name="pass" style="width: 96%">
-															</td>
-														</tr>
-													</tbody>
-												</table>
-												
-													<input type="submit" value="Login" style="float:right;">
+		<form name="FORM" method="post" action="{{page_path}}" style="height: 100%">
+			<input type="hidden" name="command" id="cmd">
+			<input type="hidden" name="arguments" id="arg">
+			<table style="width: 100%; height: 100%;">
+				<tbody>
+					<tr>
+						<td style="width: 180px; height: 100%;">
+							<div id="sidebar">
+								{% if logged_in %}
+								<table class='sidebarTable'>
+									<tbody>
+										<tr>
+											<th class='sidebarContentTitlebar'>Account</th>
+										</tr>
+										<tr>
+											<th class='sidebarTablePanelHolder'>
+												<div class='sidebarTablePanel' style="text-align: left;">
+													<a href="/logout" class="sblink">Log out</a>
+													{% if top_rank %}
+													<br>
+													<a href="/admin" class="sblink">Admin panel</a>
+													{% endif %}
+												</div>
+											</th>
+										</tr>
+									</tbody>
+								</table>
+								{% else %}
+								<table class='sidebarTable'>
+									<tbody>
+										<tr>
+											<th class='sidebarContentTitlebar'>Login</th>
+										</tr>
+										<tr>
+											<th class='sidebarTablePanelHolder'>
+												<div class='sidebarTablePanel' style="text-align: left;">
+													<table style="width: 100%">
+														<tbody>
+															<tr>
+																<td>
+																	<span class="loginLabel">Username:&nbsp;</span>
+																</td>
+																<td>
+																	<input type="text" name="user" style="width: 96%" id="loginUser">
+																</td>
+															</tr>
+															<tr>
+																<td>
+																	<span class="loginLabel">Password:&nbsp;</span>
+																</td>
+																<td>
+																	<input type="password" name="pass" style="width: 96%" id="loginPass">
+																</td>
+															</tr>
+														</tbody>
+													</table>
 													
-												</form>
-												<a href="/register" style="color:blue;">Create an account</a>
-											</div>
-										</th>
-									</tr>
-								</tbody>
-							</table>
-							{% endif %}
-							
-							<div class='sidebarSeparator'></div>
-							
-							<table class='sidebarTable'>
-								<tbody>
-									<tr>
-										<th class='sidebarContentTitlebar'>Announcement</th>
-									</tr>
-									<tr>
-										<th class='sidebarTablePanelHolder'>
-											<div class='sidebarTablePanel'>
-												No announcement
-											</div>
-										</th>
-									</tr>
-								</tbody>
-							</table>
-							
-							<div class='sidebarSeparator'></div>
-							
-							<table class='sidebarTable'>
-								<tbody>
-									<tr>
-										<th class='sidebarContentTitlebar'>Quick links</th>
-									</tr>
-									<tr>
-										<th class='sidebarTablePanelHolder'>
-											<div class='sidebarTablePanel'>
-												<a href="/" style="color:blue;">Home - Subforums<a>
-											</div>
-										</th>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</td>
-					<td>
-						<div style="height: 100%" id="content">
-							{% block content %}{% endblock %}
-						</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+													<input type="submit" value="Login" style="float:right;" form="login" onclick="loginForm()">
+													<a href="/register" class="sblink">Create an account</a>
+												</div>
+											</th>
+										</tr>
+									</tbody>
+								</table>
+								{% endif %}
+								
+								<div class='sidebarSeparator'></div>
+								
+								<table class='sidebarTable'>
+									<tbody>
+										<tr>
+											<th class='sidebarContentTitlebar'>Announcement</th>
+										</tr>
+										<tr>
+											<th class='sidebarTablePanelHolder'>
+												<div class='sidebarTablePanel'>
+													No announcement
+												</div>
+											</th>
+										</tr>
+									</tbody>
+								</table>
+								
+								<div class='sidebarSeparator'></div>
+								
+								<table class='sidebarTable'>
+									<tbody>
+										<tr>
+											<th class='sidebarContentTitlebar'>Quick links</th>
+										</tr>
+										<tr>
+											<th class='sidebarTablePanelHolder'>
+												<div class='sidebarTablePanel'>
+													<a href="/" class="sblink">Home - Subforums<a>
+												</div>
+											</th>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</td>
+						<td>
+							<div style="height: 100%" id="content">
+								{% block content %}{% endblock %}
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
 	</body>
 </html>

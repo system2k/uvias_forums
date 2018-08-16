@@ -6,20 +6,20 @@
 	</h1>
 	<div style="float: right">
 		<b>Display mode:&nbsp;</b>
-		<select style="border-color:black; margin-bottom: 3px">
-			<option>Flat (Default)</option>
-			<option>Nested</option>
+		<select style="border-color:black; margin-bottom: 3px" name="displayMode" onchange="changeMode();">
+			<option value="flat">Flat (Default)</option>
+			<option value="threaded">Threaded</option>
 		</select>
-		<select style="border-color:black; margin-bottom: 3px">
-			<option>Oldest to newest</option>
-			<option>Newest to oldest</option>
+		<select style="border-color:black; margin-bottom: 3px" name="sortOrder" onchange="changeMode();">
+			<option value="oldest_to_newest">Oldest to newest</option>
+			<option value="newest_to_oldest">Newest to oldest</option>
 		</select>
 	</div>
 	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
 			<tr>
 				<td style="text-align: right; background-image: url('/images/barGray.gif');" colspan="2">
-					<label>&lt&lt</label> <a href="/thread/{{prevThread}}">Previous</a> | <a href="/thread/{{nextThread}}">Next</a> <label>&gt&gt</label>
+					<label>&lt&lt</label> <a href="/thread/{{prevThread}}" class="control">Previous</a> | <a href="/thread/{{nextThread}}" class="control">Next</a> <label>&gt&gt</label>
 				</td>
 			</tr>
 			<tr>
@@ -33,15 +33,19 @@
 			
 			{% for label in posts %}
 			<tr style="height: 145px;">
-				<td style="vertical-align:top; width: 180px; background-color: #6fb7ff; word-break: break-all; font-size: 13px; padding: 3px;">
+				<td style="vertical-align:top; width: 180px; background-color: #{% if label.alternate == 0 %}6fb7ff{% else %}95caff{% endif %}; word-break: break-all; font-size: 13px; padding: 3px;">
+					{% if label.online %}
 					<img src="/images/online.png">
+					{% else %}
+					<img src="/images/offline.png">
+					{% endif %}
 					<b><a href="/profile/{{label.userid}}" style="font-size: 15px">{{label.username}}</a></b>
 					<br>
 					<b>Post Count: </b>{{label.postcount}}
 					<br>
 					<b>Join Date: </b>{{label.joindate}}
 				</td>
-				<td style="vertical-align:top; background-color: #b9dcff;">
+				<td style="vertical-align:top; background-color: #{% if label.alternate == 0 %}b9dcff{% else %}a6d2ff{% endif %};">
 					<table style="height: 145px; width: 100%; table-layout: fixed;">
 						<tbody>
 							<tr style="height:1px; background-color: #6ca7ff">
@@ -95,6 +99,10 @@
 				}
 			};
 			request.send()
+		}
+		function changeMode() {
+			var form = document.FORM
+			form.submit()
 		}
 	</script>
 {% endblock %}

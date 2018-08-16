@@ -54,23 +54,32 @@ module.exports = function(req, res, database, id, parseCookie, swig, querystring
 					});
 					if(!error){
 						req.on('end', function(){
+							
+							
 							var data = querystring.parse(queryData)
-							var consolas = data.consolas;
-							if(consolas == "false") {
-								consolas = 0;
-							} else if(consolas == "true") {
-								consolas = 1
-							} else {
-								consolas = 0;
-							}
-							database.run("insert into threads values(null, ?, ?, ?, ?, ?, 1, ?, ?, null, 0)", [thread.subforum, data.title, data.body, Date.now(), userinfo.user_id, id, consolas], function(a,b) {
-								database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
-									database.run("update threads set _order = (select _order+1 as ord from threads where subforum=(select subforum from threads where id=?) order by _order desc limit 1) where id=?", [id, id], function(){
-										res.write("thread/" + id)
-										res.end()
+							if(data.command == "post_reply") {
+								var args = querystring.parse(decodeURIComponent(data.arguments))
+								var consolas = args.consolas;
+								if(consolas == "false") {
+									consolas = 0;
+								} else if(consolas == "true") {
+									consolas = 1
+								} else {
+									consolas = 0;
+								}
+								database.run("insert into threads values(null, ?, ?, ?, ?, ?, 1, ?, ?, null, 0)", [thread.subforum, args.title, args.body, Date.now(), userinfo.user_id, id, consolas], function(a,b) {
+									database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
+										database.run("update threads set _order = (select _order+1 as ord from threads where subforum=(select subforum from threads where id=?) order by _order desc limit 1) where id=?", [id, id], function(){
+											res.writeHead(302, {
+												"Location": "/thread/" + id
+											})
+											res.end()
+										})
 									})
 								})
-							})
+							} else {
+								res.end("Invalid command")
+							}
 						});
 					}
 				} else {

@@ -84,6 +84,31 @@ module.exports = function(){
 		}
 	}
 	
+	function configureStyle(n) {
+		process.stdout.write("\x1B["+n+"m")
+	}
+	var cols = {
+		red: 31,
+		green: 32,
+		yellow: 33,
+		blue: 34,
+		magenta: 35,
+		cyan: 36,
+		gray: 37,
+		l_gray: 90,
+		l_red: 91,
+		l_green: 92,
+		l_yellow: 93,
+		l_blue: 94,
+		l_magenta: 95,
+		white: 97
+	}
+	function log(text, color) {
+		if(color) configureStyle(cols[color])
+		console.log(text)
+		if(color) configureStyle(0)
+	}
+	
 	function cookieExpireDate(timestamp) {
 		var dayWeekList = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 		var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -126,34 +151,91 @@ module.exports = function(){
 		}
 	});
 	
+	var lastCommand = ""
+	var addsampledataconfirm = false;
 	function processCommand(cmd){
+		var rawCommand = cmd;
 		cmd = cmd.split(" ")
 		if(cmd[0] === "rank"){
 			database.run("update users set rank=? where username=?", [cmd[2], cmd[1]], function(a,b){
-				if(a == null) console.log("Rank for " + cmd[1] + " set to: " + cmd[2])
-				if(a !== null) console.log("Error setting rank")
+				if(a == null) log("Rank for " + cmd[1] + " set to: " + cmd[2], "l_green")
+				if(a !== null) log("Error setting rank", "l_red")
 			})
+			lastCommand = rawCommand
 		}
 		if(cmd[0] === "update" && cmd[1] === "post-count") {
 			database.run("update subforums set post_count = (select count(*) from threads where subforum=subforums.id and type=0 and deleted=0)", function(){
-				console.log("Updated subforum post count to correct numbers")
+				log("Updated subforum post count to correct numbers", "l_green")
 				database.run("update users set posts = (select count(*) from threads where user=users.id and deleted=0)", function(){
-					console.log("Updated user post count to correct numbers")
-					console.log("Operation completed")
+					log("Updated user post count to correct numbers", "l_green")
+					log("Operation completed", "l_green")
 				})
 			})
+			lastCommand = rawCommand
+		}
+		if(cmd[0] === "log-active-users") {
+			if(Object.keys(online_users).length === 0) log("There are no active users", "l_red")
+			for(i in online_users){
+				console.log(Date.now(), online_users[i], Date.now()-online_users[i])
+			}
+			lastCommand = rawCommand
+		}
+		if(cmd[0] === "add" && cmd[1] === "sample-data") {
+			console.log("Are you sure you want to add sample data?\nThis must only be executed right after the database has been created and has no data on it.\nType 'yes' to continue adding sample data.\nUse at your own risk.")
+			addsampledataconfirm = true
+			lastCommand = rawCommand
+		}
+		if(cmd[0] === "yes" && addsampledataconfirm) {
+			console.log("Adding data...")
+			database.run("insert into users values(null, ?, ?, ?, 0, 2)", ["Admin", encryptHash("admin"), Date.now()], function(e){
+				if(e) {
+					log("An error occured while creating the admin account:", "l_red")
+					console.log(e)
+				} else {
+					log("Added admin account successfully (username: admin, password: admin)", "l_green")
+					database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, ?)", ["Subforum 1", "Sample subforum generated automatically using the console", Date.now(), 1], function(e){
+						if(e) {
+							log("An error occured while creating sample subforum #1:", "red")
+							console.log(e)
+						} else {
+							log("Added sample subforum #1 successfully", "l_green")
+							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, ?)", ["Subforum 2", "Another subforum generated automatically using the console", Date.now(), 2], function(e){
+								if(e) {
+									log("An error occured while creating sample subforum #2:", "l_red")
+									console.log(e)
+								} else {
+									log("Added sample subforum #2 successfully", "l_green")
+									console.log("Sample data creation complete.")
+								}
+							})
+						}
+					})
+				}
+			})
+		}
+		if(cmd[0] === "repeat") {
+			console.log("Repeating last command: " + lastCommand)
+			processCommand(lastCommand)
 		}
 	}
 	
 	database.get("select * from info where name='init'", function(a, b){
 		if(typeof a == "object" && a !== null) {
 			if(a.code == "SQLITE_ERROR") {
+				log("Creating tables...", "l_green")
 				database.run("create table info(name)", function(){
+					console.log("Created 'info'")
 					database.run("insert into info values('init')", function(){
+						console.log("Marked database as initialized")
 						database.run("create table subforums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, post_count integer, _order integer)", function(){
-							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, font integer, _order integer, deleted integer)", function(){
+							console.log("Created 'subforums'")
+							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, font integer, _order integer, deleted integer, views integer)", function(){
+								console.log("Created 'threads'")
 								database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer)", function(){
+									console.log("Created 'users'")
 									database.run("create table session(user_id integer, expire_date integer, key text)", function(){
+										console.log("Created 'session'")
+										log("Table creation complete.", "l_green")
 										run()
 									})
 								})
@@ -223,6 +305,23 @@ module.exports = function(){
 	res.setHeader("Expires", "0");
 	*/
 	
+	
+	var online_users = {}
+	
+	setInterval(function(){
+		//check last activities
+		var Now = Date.now()
+		var Compare = Now - 1000 * 60 * 5 // in last 5 minutes
+		for(i in online_users){
+			var time = online_users[i]
+			if(Compare > time) {
+				delete online_users[i]
+			}
+		}
+		//clear expired sessions
+		database.all("delete from session where expire_date <= ?", [Date.now()])
+	}, 1000*60) // check every minute
+	
 	function server_(req, res) {
 		var d = domain.create()
 		d.on('error', function(er) {
@@ -232,7 +331,7 @@ module.exports = function(){
 		d.add(req)
 		d.add(res)
 		d.run(function(){
-			
+			var path = url.parse(req.url)
 			
 			var cookie = req.headers.cookie
 			cookie = parseCookie(cookie)
@@ -253,8 +352,10 @@ module.exports = function(){
 						sid: sid,
 						user_id: user_id,
 						loggedin: loggedin,
-						top_rank: false
+						top_rank: false,
+						page_path: path.href
 					}
+					online_users[user_id] = Date.now()
 					if(loggedin) {
 						database.get("select rank from users where id=?", [user_id], function(a, b){
 							userinfo.top_rank = b.rank == 1 || b.rank == 2
@@ -268,7 +369,8 @@ module.exports = function(){
 						sid: "",
 						user_id: 0,
 						loggedin: false,
-						top_rank: false
+						top_rank: false,
+						page_path: path.href
 					}
 					comp()
 				}
@@ -276,7 +378,6 @@ module.exports = function(){
 			
 			
 			function comp(){
-				var path = url.parse(req.url)
 				var pathname = path.pathname
 				if(pathname.charAt(0) === "/") pathname = pathname.substr(1)
 					
@@ -338,7 +439,7 @@ module.exports = function(){
 				} else if(pathname.startsWith("sf/")){
 					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo)
 				} else if(pathname.startsWith("thread/")) {
-					page_thread(req, res, swig, database, pathname.substr(7), parseCookie, userinfo, date_created)
+					page_thread(req, res, swig, database, pathname.substr(7), parseCookie, userinfo, date_created, querystring, online_users)
 				} else if(pathname == "register") {
 					page_register(req, res, swig, querystring, database, encryptHash, crypto, url, parseCookie, userinfo)
 				} else if(pathname.startsWith("post/")) {

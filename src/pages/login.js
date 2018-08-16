@@ -45,9 +45,10 @@ module.exports = function(req, res, database, querystring, checkHash, cookieExpi
 						var chkpass = b.password;
 						if(checkHash(chkpass, pass)){
 							var tkn = token(32)
-							database.run("insert into session values(?, ?, ?)", [b.id, 0, tkn], function(a,b) {
+							var expires = Date.now() + Month*2
+							database.run("insert into session values(?, ?, ?)", [b.id, expires, tkn], function(a,b) {
 								res.writeHead(302, {
-									"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(Date.now() + Month) + ";",
+									"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
 									"Location": "/"
 								})
 								res.end()

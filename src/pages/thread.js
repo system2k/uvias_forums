@@ -16,9 +16,8 @@ function joindate_label(timestamp){
 	return mth + " " + day + ", " + yer
 }
 
-module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created) {
+module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users) {
 	var method = req.method.toLowerCase()
-	
 	if(method == "get"){
 		var tmp = swig.compileFile("./src/html/thread.html")
 		
@@ -46,6 +45,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 					})
 				})
 				
+				var alternate = 0;
 				function threadPage(){
 					if(b.type == 0){
 						database.get("select name from subforums where id=?", [b.subforum], function(err, sf){
@@ -63,9 +63,12 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									type: 0,
 									redir: JSON.stringify("/sf/" + b.subforum),
 									joindate: 0,
-									userid: b.user
+									userid: b.user,
+									alternate: alternate,
+									online: !!online_users[b.user]
 								}
 							]
+							alternate++
 							if(b.user == userinfo.user_id){
 								posts[0].owner = true
 							}
@@ -86,8 +89,12 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 										type: 1,
 										redir: "\"\"",
 										joindate: 0,
-										userid: replies[i].user
+										userid: replies[i].user,
+										alternate: alternate,
+										online: !!online_users[replies[i].user]
 									})
+									alternate++
+									alternate %= 2
 								}
 								var usernames = [];
 								var postcounts = [];
@@ -128,7 +135,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 							})
 						})
 					} else {
-						module.exports(req, res, swig, database, b.parent, parseCookie, userinfo, date_created)
+						module.exports(req, res, swig, database, b.parent, parseCookie, userinfo, date_created, querystring, online_users)
 					}
 				}
 			}
@@ -162,5 +169,25 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				res.end()
 			}
 		})
+	}
+	if(method == "post"){
+		var queryData = "";
+		var error = false;
+		req.on('data', function(data) {
+            queryData += data;
+            if (queryData.length > 1000000) {
+                queryData = "";
+				res.end("")
+                error = true
+                req.connection.destroy();
+            }
+        });
+		if(!error){
+			req.on('end', function(){
+				var data = querystring.parse(queryData)
+				
+				res.end("<html>" + JSON.stringify(data) + "<br>This feature is not yet implemented</html>")
+			});
+		}
 	}
 }

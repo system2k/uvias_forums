@@ -42,8 +42,8 @@
 								<td colspan="2">
 									<div style="width: 90%; height: 1px">
 										<div style="float:right;">
-											<button style="padding: 1px 17px;" onclick="cancel();">Cancel</button>
-											<button style="padding: 1px 17px;" onclick="postreply();">Reply to post</button>
+											<button style="padding: 1px 17px;" onclick="cancel();" type="button">Cancel</button>
+											<button style="padding: 1px 17px;" onclick="postreply();" type="button">Reply to post</button>
 										</div>
 									</div>
 								</td>
@@ -59,14 +59,11 @@
 {% block scriptcontent %}
 	<script>
 		function postreply(){
-			var request = new XMLHttpRequest();
-			request.open('POST', window.location.pathname, true);
-
-			request.onload = function() {
-				window.location.pathname = request.responseText
-			};
-
-			request.send("title=" + encodeURIComponent(document.getElementById("title").value) + "&body=" + encodeURIComponent(document.getElementById("body").value) + "&consolas=" + document.getElementById("font").checked);
+			FormSubmit("post_reply", {
+				title: document.getElementById("title").value,
+				body: document.getElementById("body").value,
+				consolas: document.getElementById("font").checked
+			}, window.location.pathname)
 		}
 		function cancel(){
 			window.location.pathname = document.getElementById("previous_thread_url").innerText

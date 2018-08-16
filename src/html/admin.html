@@ -5,7 +5,7 @@
 	<h1>
 		Admin Panel
 	</h1>
-	<button onclick="addsubforum()">Create subforum</button> <button onclick="editsubforums()">Edit all</button>
+	<button onclick="addsubforum()" type="button">Create subforum</button> <button onclick="editsubforums()" type="button">Edit all</button>
 	<div style="display:none;" id="sfc">{{subforum_count}}</div>
 	<table style="width: 100%; table-layout: auto;" border="1">
 		<tbody id="subforum_rows">
@@ -58,5 +58,5 @@
 			{% endfor %}
 		</tbody>
 	</table>
-	<button style="float:right" onclick="sendchanges()">OK</button>
+	<button style="float:right" onclick="sendchanges()" type="button">OK</button>
 {% endblock %}

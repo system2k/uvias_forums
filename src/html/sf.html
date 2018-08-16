@@ -4,7 +4,7 @@
 	<h1>
 		Subforums >> {{subforum_name}}
 	</h1>
-	<button onclick="location.href = '/post/{{subforum_id}}';">Create new thread</button>
+	<button onclick="location.href = '/post/{{subforum_id}}';" type="button">Create new thread</button>
 	<br>
 	{% if pagebar.threadcount != 0 %}
 	<table style="width: 100%; table-layout: auto;" border=1>
@@ -40,21 +40,21 @@
 	<div style="float:right">
 		Go to page:&nbsp;
 		{% if pagebar.page != 1 %}
-			<a href="{{pagebar.path}}/{{pagebar.prevPage}}">Previous</a>
+			<a href="{{pagebar.path}}/{{pagebar.prevPage}}" class="control">Previous</a>
 		{% endif %}
 		
 		{% if pagebar.dddA %}
-			{% if pagebar.page != "1" %}<a href="{{pagebar.path}}">1</a>&nbsp;
+			{% if pagebar.page != "1" %}<a href="{{pagebar.path}}" class="control">1</a>&nbsp;
 			{% else %}
 				<b>1<b>&nbsp;
 			{% endif %}
 			
-			{% if pagebar.page != "2" %}<a href="{{pagebar.path}}/2">2</a>&nbsp;
+			{% if pagebar.page != "2" %}<a href="{{pagebar.path}}/2" class="control">2</a>&nbsp;
 			{% else %}
 				<b>2<b>&nbsp;
 			{% endif %}
 			
-			{% if pagebar.page != "3" %}<a href="{{pagebar.path}}/3">3</a>&nbsp;
+			{% if pagebar.page != "3" %}<a href="{{pagebar.path}}/3" class="control">3</a>&nbsp;
 			{% else %}
 				<b>3<b>&nbsp;
 			{% endif %}
@@ -63,7 +63,7 @@
 		
 		{% for data in pagebar.pages %}
 			{% if pagebar.page != data %}
-			<a href="{{pagebar.path}}{% if data != 1 %}/{{data}}{% endif %}">{{data}}</a>&nbsp;
+			<a href="{{pagebar.path}}{% if data != 1 %}/{{data}}{% endif %}" class="control">{{data}}</a>&nbsp;
 			{% else %}
 			<b>{{data}}</b>
 			{% endif %}
@@ -71,13 +71,13 @@
 		
 		{% if pagebar.dddB %}
 			...&nbsp;
-			<a href="{{pagebar.path}}/{{pagebar.a}}">{{pagebar.a}}</a>&nbsp;
-			<a href="{{pagebar.path}}/{{pagebar.b}}">{{pagebar.b}}</a>&nbsp;
-			<a href="{{pagebar.path}}/{{pagebar.c}}">{{pagebar.c}}</a>
+			<a href="{{pagebar.path}}/{{pagebar.a}}" class="control">{{pagebar.a}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.b}}" class="control">{{pagebar.b}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.c}}" class="control">{{pagebar.c}}</a>
 		{% endif %}
 		
 		{% if pagebar.page < pagebar.pageCount %}
-			<a href="{{pagebar.path}}/{{pagebar.nextPage}}">Next</a>
+			<a href="{{pagebar.path}}/{{pagebar.nextPage}}" class="control">Next</a>
 		{% endif %}
 		<br>
 		<div style="float:right">

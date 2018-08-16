@@ -5,10 +5,10 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo) {
 	var page = 1;
 	
 	id = id.split("/")
-	if(id.length == 1){
+	if(typeof id == "object" && id.length == 1){
 		id = id[0]
 	}
-	if(id.length > 1){
+	if(typeof id == "object" && id.length > 1){
 		page = id[1];
 		id = id[0];
 	}
