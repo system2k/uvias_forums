@@ -1,4 +1,4 @@
-module.exports = function(req, res, swig, querystring, database, encryptHash, crypto, url) {
+module.exports = function(req, res, swig, querystring, database, encryptHash, crypto, url, parseCookie, userinfo) {
 	var method = req.method.toLowerCase()
 	
 	if(method == "get") {
@@ -11,9 +11,10 @@ module.exports = function(req, res, swig, querystring, database, encryptHash, cr
 			errLabel = "There already exists an account with the same username";
 		}
 		
-		var output = tmp({
-			err_label: errLabel
-		});
+		var output = tmp(Object.assign({
+			err_label: errLabel,
+			logged_in: userinfo.loggedin
+		}, userinfo));
 		
 		res.write(output)
 		res.end()
@@ -22,14 +23,14 @@ module.exports = function(req, res, swig, querystring, database, encryptHash, cr
 		var queryData = "";
 		var error = false;
 		req.on('data', function(data) {
-            queryData += data;
-            if (queryData.length > 2000) {
-                queryData = "";
+			queryData += data;
+			if (queryData.length > 2000) {
+				queryData = "";
 				res.end("")
-                error = true
-                req.connection.destroy();
-            }
-        });
+				error = true
+				req.connection.destroy();
+			}
+		});
 		if(!error){
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
@@ -39,7 +40,7 @@ module.exports = function(req, res, swig, querystring, database, encryptHash, cr
 				
 				database.get("select username from users where username=? collate nocase", [user], function(a, b){
 					if(b === undefined) {
-						database.run("insert into users values(null, ?, ?, ?, 0)", [user, encryptHash(pass), Date.now()], function(a, b){
+						database.run("insert into users values(null, ?, ?, ?, 0, 0)", [user, encryptHash(pass), Date.now()], function(a, b){
 							res.writeHead(302, {
 								"Location": "/"
 							})

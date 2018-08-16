@@ -4,12 +4,11 @@
 	<h1 style="word-break: break-all;">
 		Subforums >> {{subforum_name}} >> {{thread_title}}
 	</h1>
-	<table style="width: 100%; table-layout: fixed;" border=1>
+	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
 			<tr>
-				<td style="width: 128px; background-image: url('/images/barGray.gif'); border-right: none;"></td>
-				<td style="text-align: right; background-image: url('/images/barGray.gif'); border-left: none;">
-					<label><< Previous | Next >></label>
+				<td style="text-align: right; background-image: url('/images/barGray.gif'); border-left: none;" colspan="2">
+					<label>&lt&lt</label> <a href="/">Previous</a> | <a href="/">Next</a> <label>&gt&gt</label>
 				</td>
 			</tr>
 			<tr>
@@ -21,16 +20,42 @@
 				</th>
 			</tr>
 			
+			{% for label in posts %}
 			<tr style="height: 145px;">
 				<td style="vertical-align:top; width: 128px; background-color: #6fb7ff; word-break: break-all;">
-					{{op_username}}
+					{{label.username}}
+					<br>
+					Post Count: {{label.postcount}}
 				</td>
 				<td style="vertical-align:top; background-color: #b9dcff;">
-					<div style="word-wrap: break-word">
-						{{thread_body}}
-					</div>
+					<table style="height: 145px; width: 100%; table-layout: fixed;">
+						<tbody>
+							<tr style="height:0px; background-color: blue">
+								<td style="color:white; word-break: break-all;">
+									<b>
+										{{label.title}}
+									</b>
+									<br>
+									<label style="font-size: 13px">{{label.post_date}}</label>
+								</td>
+							</tr>
+							<tr>
+								<td style="vertical-align:top">
+									<div style="word-wrap: break-word;{% if label.consolas %} font-family: Consolas;{% endif %}">
+										{{label.body | safe}}
+									</div>
+								</td>
+							</tr>
+							<tr style="height:0px">
+								<td style="background-color: cyan">
+									<a href="{{label.replyurl}}" style="color:blue;">Post reply</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</td>
 			</tr>
+			{% endfor %}
 			
 		</tbody>
 	</table>

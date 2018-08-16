@@ -1,0 +1,75 @@
+module.exports = function(req, res, database, id, parseCookie, swig, querystring, userinfo){
+	var thread;
+	
+	database.get("select * from threads where id=?", [id], function(a, post){
+		thread = post
+		thread_retrieved()
+	})
+	
+	
+	var method = req.method.toLowerCase()
+	
+	function thread_retrieved(){
+		if(method == "get"){
+			var tmp = swig.compileFile("./src/html/reply.html")
+			
+			database.get("select * from subforums where id=?", [thread.subforum], function(a, b){
+				if(typeof a === "object" && a !== null || b === undefined) {
+					res.write("Subforum not found")
+					res.end()
+				} else {
+					var output = tmp(Object.assign({
+						subforum_name: b.name,
+						logged_in: userinfo.loggedin,
+						thread_title: thread.title,
+						reply_title: "RE: " + thread.title
+					}, userinfo));
+					res.write(output)
+					res.end()
+				}
+			})
+		}
+		if(method == "post") {
+			if(userinfo.loggedin){
+				if(thread.type == 0){
+					var queryData = "";
+					var error = false;
+					req.on('data', function(data) {
+						queryData += data;
+						if (queryData.length > 1000000) {
+							queryData = "";
+							res.end("")
+							error = true
+							req.connection.destroy();
+						}
+					});
+					if(!error){
+						req.on('end', function(){
+							var data = querystring.parse(queryData)
+							var consolas = data.consolas;
+							if(consolas == "false") {
+								consolas = 0;
+							} else if(consolas == "true") {
+								consolas = 1
+							} else {
+								consolas = 0;
+							}
+							database.run("insert into threads values(null, ?, ?, ?, ?, ?, 1, ?, ?, null)", [thread.subforum, data.title, data.body, Date.now(), userinfo.user_id, id, consolas], function(a,b) {
+								database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
+									database.run("update threads set _order = (select _order+1 as ord from threads where subforum=(select subforum from threads where id=?) order by _order desc limit 1) where id=?", [id, id], function(){
+										res.write("thread/" + id)
+										res.end()
+									})
+								})
+							})
+						});
+					}
+				} else {
+					res.end("Invalid post type")
+				}
+			} else {
+				res.end("You need to be logged in")
+			}
+		}
+	}
+}

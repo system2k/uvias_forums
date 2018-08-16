@@ -59,6 +59,26 @@
 				<tr>
 					<td style="width: 180px; height: 100%;">
 						<div id="sidebar">
+							{% if logged_in %}
+							<table class='sidebarTable'>
+								<tbody>
+									<tr>
+										<th class='sidebarContentTitlebar'>Account</th>
+									</tr>
+									<tr>
+										<th class='sidebarTablePanelHolder'>
+											<div class='sidebarTablePanel' style="text-align: left;">
+												<a href="/logout" style="color:blue;">Log out</a>
+												{% if top_rank %}
+												<br>
+												<a href="/admin" style="color:blue;">Admin panel</a>
+												{% endif %}
+											</div>
+										</th>
+									</tr>
+								</tbody>
+							</table>
+							{% else %}
 							<table class='sidebarTable'>
 								<tbody>
 									<tr>
@@ -69,7 +89,7 @@
 											<div class='sidebarTablePanel' style="text-align: left;">
 												<form method="post" action="/login">
 													<label>Username:</label><input type="text" name="user" style="width: 90px"><br>
-													<label>Password:</label><input type="password" name="user" style="width: 90px"><br>
+													<label>Password:</label><input type="password" name="pass" style="width: 90px"><br>
 													<input type="submit" value="Login" style="float:right;">
 												</form>
 												<a href="/register" style="color:blue;">Create an account</a>
@@ -78,6 +98,7 @@
 									</tr>
 								</tbody>
 							</table>
+							{% endif %}
 							
 							<div class='sidebarSeparator'></div>
 							

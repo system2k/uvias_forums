@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel
+	</h1>
+	<button onclick="addsubforum()">Create subforum</button> <button onclick="editsubforums()">Edit all</button>
+	<div style="display:none;" id="sfc">{{subforum_count}}</div>
+	<table style="width: 100%; table-layout: auto;" border="1">
+		<tbody id="subforum_rows">
+			<tr>
+				<th colspan="6" style="background-color:#a8beff">
+					Manage Subforums
+				</th>
+			</tr>
+			<tr style="background-color:#cecece">
+				<th>
+					ID
+				</th>
+				<th>
+					Name
+				</th>
+				<th>
+					Description
+				</th>
+				<th>
+					Date created
+				</th>
+				<th>
+					Post count
+				</th>
+				<th>
+					Order
+				</th>
+			</tr>
+			{% for label in subforums %}
+			<tr style="background-color: #cee7ff;" class="sfrow">
+				<td>
+					{{label.id}}
+				</td>
+				<td>
+					{{label.name}}
+				</td>
+				<td>
+					{{label.desc}}
+				</td>
+				<td>
+					{{label.date_created}}
+				</td>
+				<td>
+					{{label.post_count}}
+				</td>
+				<td>
+					{{label._order}}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<button style="float:right" onclick="sendchanges()">OK</button>
+{% endblock %}

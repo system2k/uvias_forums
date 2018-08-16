@@ -2,23 +2,23 @@
 
 {% block content %}
 	<h1>
-		Subforums >> {{subforum_name}} >> Create thread
+		Subforums >> {{subforum_name}} >> {{thread_title}} >> Reply to post
 	</h1>
 	<table style="width: 100%" border=1>
 		<tbody>
 			<tr>
 				<th class="sfhead">
-					Thread Creation Page
+					Reply To Post
 				</th>
 			</tr>
 			<tr style="height: 512px;">
 				<td style="height: 512px;">
 					<div style="vertical-align: top; height: 100%">
-						Title: <input style="width: 90%" id="title">
+						Title: <input style="width: 90%" id="title" value="{{reply_title}}">
 						<br>
 						<label style="vertical-align: top;">Body: </label><textarea id="body" style="width: 90%; height: 90%"></textarea>
 						<br>
-						<button style="float:right" onclick="postthread();">Post</button>
+						<button style="float:right" onclick="postreply();">Post</button>
 						<input type="checkbox" id="font"> Consolas
 					</div>
 				</td>
@@ -28,7 +28,7 @@
 {% endblock %}
 
 {% block scriptcontent %}
-	function postthread(){
+	function postreply(){
 		var request = new XMLHttpRequest();
 		request.open('POST', window.location.pathname, true);
 
