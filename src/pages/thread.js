@@ -41,7 +41,27 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 						} else {
 							prev_thread_id = prev.id
 						}
-						threadPage()
+						if(b.type == 0){
+							database.run("update threads set views=views+1 where id=?",[id],function(){
+								if(userinfo.loggedin) {
+									database.get("select * from views where user=? and type=0 and post_id=?", [userinfo.user_id, id], function(er,cont){
+										if(er || !cont) {
+											database.run("insert into views values(?, ?, 0, null, ?, ?)", [userinfo.user_id, Date.now(), id, b.subforum], function(){
+												threadPage()
+											})
+										} else {
+											database.run("update views set date=? where user=? and post_id=? and type=0", [Date.now(), userinfo.user_id, id], function(){
+												threadPage()
+											})
+										}
+									})
+								} else {
+									threadPage()
+								}
+							})
+						} else {
+							threadPage()
+						}
 					})
 				})
 				
@@ -73,7 +93,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 								posts[0].owner = true
 							}
 							
-							database.all("select * from threads where type=1 and parent=? and deleted = 0", [id], function(a,replies){
+							database.all("select * from threads where type=1 and thread=? and deleted = 0", [id], function(a,replies){
 								for(i in replies){
 									var owner = replies[i].user == userinfo.user_id
 									posts.push({
@@ -81,7 +101,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 										title: replies[i].title,
 										post_date: date_created(replies[i].date_created),
 										body: escapeBody(replies[i].body),
-										replyurl: "/reply/" + id,
+										replyurl: "/reply/" + replies[i].id,
 										postcount: 0,
 										consolas: !!replies[i].font,
 										owner: owner,
@@ -135,7 +155,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 							})
 						})
 					} else {
-						module.exports(req, res, swig, database, b.parent, parseCookie, userinfo, date_created, querystring, online_users)
+						module.exports(req, res, swig, database, b.thread, parseCookie, userinfo, date_created, querystring, online_users)
 					}
 				}
 			}
@@ -152,6 +172,10 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				var userid = b.user
 				database.run("update threads set deleted = 1 where id=?", [b.id], function(){
 					if(b.type === 0){
+						database.run("update subforums set thread_count=thread_count-1 where id=?", [subforum], function(){
+							complete()
+						})
+					} else if(b.type === 1) {
 						database.run("update subforums set post_count=post_count-1 where id=?", [subforum], function(){
 							complete()
 						})

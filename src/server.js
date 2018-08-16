@@ -24,6 +24,7 @@ module.exports = function(){
 	pre_load("img", "offline", "./src/image/offline.png")
 	pre_load("img", "online", "./src/image/online.png")
 	pre_load("img", "thread", "./src/image/thread.png")
+	pre_load("img", "thread_read", "./src/image/thread_read.png")
 	
 	pre_load("js", "adminpanel", "./src/javascripts/adminpanel.js")
 	
@@ -193,13 +194,13 @@ module.exports = function(){
 					console.log(e)
 				} else {
 					log("Added admin account successfully (username: admin, password: admin)", "l_green")
-					database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, ?)", ["Subforum 1", "Sample subforum generated automatically using the console", Date.now(), 1], function(e){
+					database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Subforum 1", "Sample subforum generated automatically using the console", Date.now(), 1], function(e){
 						if(e) {
 							log("An error occured while creating sample subforum #1:", "red")
 							console.log(e)
 						} else {
 							log("Added sample subforum #1 successfully", "l_green")
-							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, ?)", ["Subforum 2", "Another subforum generated automatically using the console", Date.now(), 2], function(e){
+							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Subforum 2", "Another subforum generated automatically using the console", Date.now(), 2], function(e){
 								if(e) {
 									log("An error occured while creating sample subforum #2:", "l_red")
 									console.log(e)
@@ -227,16 +228,19 @@ module.exports = function(){
 					console.log("Created 'info'")
 					database.run("insert into info values('init')", function(){
 						console.log("Marked database as initialized")
-						database.run("create table subforums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, post_count integer, _order integer)", function(){
+						database.run("create table subforums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer)", function(){
 							console.log("Created 'subforums'")
-							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, font integer, _order integer, deleted integer, views integer)", function(){
+							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)", function(){
 								console.log("Created 'threads'")
 								database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer)", function(){
 									console.log("Created 'users'")
 									database.run("create table session(user_id integer, expire_date integer, key text)", function(){
 										console.log("Created 'session'")
-										log("Table creation complete.", "l_green")
-										run()
+										database.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, subforum_id integer)", function(){
+											console.log("Created 'views'")
+											log("Table creation complete.", "l_green")
+											run()
+										})
 									})
 								})
 							})
@@ -322,6 +326,12 @@ module.exports = function(){
 		database.all("delete from session where expire_date <= ?", [Date.now()])
 	}, 1000*60) // check every minute
 	
+	/*process.on('uncaughtException', function(err) {
+		if(err.errno === 'EADDRINUSE') {
+			console.log("The port " + port + " is already in use. The server cannot start")
+		}
+		process.exit()
+	}); */
 	function server_(req, res) {
 		var d = domain.create()
 		d.on('error', function(er) {
@@ -436,8 +446,13 @@ module.exports = function(){
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["thread"], "binary");
+				} else if(pathname == "images/thread_read.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["thread_read"], "binary");
 				} else if(pathname.startsWith("sf/")){
-					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo)
+					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo, querystring)
 				} else if(pathname.startsWith("thread/")) {
 					page_thread(req, res, swig, database, pathname.substr(7), parseCookie, userinfo, date_created, querystring, online_users)
 				} else if(pathname == "register") {

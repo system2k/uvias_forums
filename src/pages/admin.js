@@ -12,6 +12,7 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 					name: b[i].name,
 					desc: b[i].desc,
 					date_created: date_created(b[i].date_created),
+					thread_count: b[i].thread_count,
 					post_count: b[i].post_count,
 					_order: b[i]._order
 				})
@@ -46,7 +47,7 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 					var i = 0;
 					function step(){
 						database.get("SELECT COUNT(*) AS cnt FROM subforums", function(a,b){
-							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, ?)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
+							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
 								i++;
 								if(sfs.length > i){
 									step()

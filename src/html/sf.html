@@ -16,17 +16,29 @@
 				<th class="sfhead" style="width: 200px;">
 					Posted by
 				</th>
+				<th class="sfhead" style="width: 100px;">
+					Views
+				</th>
 			</tr>
 			{% for label in threads %}
 			<tr style="height: 30px;">
+				{% if !label.read %}
 				<td style="width: 30px; background-color: #cee7ff;">
 					<img src="/images/thread.png">
 				</td>
+				{% else %}
+				<td style="width: 30px; background-color: #cee7ff;">
+					<img src="/images/thread_read.png">
+				</td>
+				{% endif %}
 				<td style="background-color: #b9dcff; word-break: break-all;">
 					<a href="/thread/{{label.id}}" class="rowText">{{label.title}}</a>
 				</td>
 				<td style="background-color: #cee7ff; word-break: break-all;">
 					<a href="/profile/{{label.userid}}" class="rowText">{{label.postedby}}</a>
+				</td>
+				<td style="background-color: #b9dcff; word-break: break-all;">
+					<span class="rowText">{{label.views}}</span>
 				</td>
 			</tr>
 			{% endfor %}
@@ -87,6 +99,10 @@
 		</div>
 	</div>
 	{% endif %}
+	<div style="float:right">
+		<a href="javascript:FormSubmit('mark_all_as_read', {})" class="sblink">Mark all threads as read</a>
+	</div>
+	<b style="font-family: Verdana; font-size: 0.6em">Page {{pagebar.page}} of {{pagebar.pages}}</b>
 {% endblock %}
 
 {% block scriptcontent %}

@@ -35,8 +35,8 @@ module.exports = function(req, res, swig, querystring, database, encryptHash, cr
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
 				
-				var user = data.user
-				var pass = data.pass
+				var user = data.reg_user
+				var pass = data.reg_pass
 				
 				database.get("select username from users where username=? collate nocase", [user], function(a, b){
 					if(b === undefined) {
