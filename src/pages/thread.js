@@ -1,5 +1,5 @@
 function escapeBody(body){
-	return body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")
+	return body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")
 }
 
 var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -97,13 +97,13 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				var next_thread_id;
 				var prev_thread_id;
 				
-				database.get("select * from threads where subforum = ? and type = 0 and deleted = 0 and _order < ? order by _order desc limit 1", [b.subforum, b._order], function(a,next){
+				database.get("select * from threads where forum = ? and type = 0 and deleted = 0 and _order < ? order by _order desc limit 1", [b.forum, b._order], function(a,next){
 					if(!next) {
 						next_thread_id = id
 					} else {
 						next_thread_id = next.id
 					}
-					database.get("select * from threads where subforum = ? and type = 0 and deleted = 0 and _order > ? order by _order limit 1", [b.subforum, b._order], function(a, prev){
+					database.get("select * from threads where forum = ? and type = 0 and deleted = 0 and _order > ? order by _order limit 1", [b.forum, b._order], function(a, prev){
 						if(!prev) {
 							prev_thread_id = id
 						} else {
@@ -114,7 +114,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 								if(userinfo.loggedin) {
 									database.get("select * from views where user=? and type=0 and post_id=?", [userinfo.user_id, id], function(er,cont){
 										if(er || !cont) {
-											database.run("insert into views values(?, ?, 0, null, ?, ?)", [userinfo.user_id, Date.now(), id, b.subforum], function(){
+											database.run("insert into views values(?, ?, 0, null, ?, ?)", [userinfo.user_id, Date.now(), id, b.forum], function(){
 												threadPage()
 											})
 										} else {
@@ -138,7 +138,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				
 				function threadPage(){
 					if(b.type == 0){
-						database.get("select name from subforums where id=?", [b.subforum], function(err, sf){
+						database.get("select name from forums where id=?", [b.forum], function(err, sf){
 							if(!displayMode){
 								var posts = []
 								
@@ -153,7 +153,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									owner: false,
 									id: b.id,
 									type: 0,
-									redir: JSON.stringify("/sf/" + b.subforum),
+									redir: JSON.stringify("/sf/" + b.forum),
 									joindate: 0,
 									userid: b.user,
 									alternate: alternate,
@@ -283,7 +283,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 												posts[i].joindate = joindate_label(joindates[i])
 											}
 											var output = tmp(Object.assign({
-												subforum_name: sf.name,
+												forum_name: sf.name,
 												logged_in: userinfo.loggedin,
 												thread_title: b.title,
 												posts: posts,
@@ -307,7 +307,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									id: b.id,
 									path: [b.id],
 									title: b.title,
-									body: escapeBody(b.body),
+									body: b.body,
 									children: [],
 									user: b.user,
 									post_date: date_created(b.date_created),
@@ -444,7 +444,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									usernameStep()
 									function usernameFinished(){
 										var output = tmp(Object.assign({
-											subforum_name: sf.name,
+											forum_name: sf.name,
 											logged_in: userinfo.loggedin,
 											thread_title: b.title,
 											posts: 0,
@@ -477,15 +477,15 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				return
 			}
 			if(userinfo.user_id == b.user) {
-				var subforum = b.subforum
+				var forum = b.forum
 				var userid = b.user
 				database.run("update threads set deleted = 1 where id=?", [b.id], function(){
 					if(b.type === 0){
-						database.run("update subforums set thread_count=thread_count-1 where id=?", [subforum], function(){
+						database.run("update forums set thread_count=thread_count-1 where id=?", [forum], function(){
 							complete()
 						})
 					} else if(b.type === 1) {
-						database.run("update subforums set post_count=post_count-1 where id=?", [subforum], function(){
+						database.run("update forums set post_count=post_count-1 where id=?", [forum], function(){
 							complete()
 						})
 					} else {

@@ -1,13 +1,13 @@
-module.exports = function(req, res, swig, userinfo, database, date_created, querystring){
+module.exports = function(req, res, swig, userinfo, database, date_created, querystring, cache_data){
 	var method = req.method.toLowerCase()
 	
 	if(method == "get"){
 		var tmp = swig.compileFile("./src/html/admin.html")
 		
-		database.all("select * from subforums", function(a,b){
-			var subforums = []
+		database.all("select * from forums", function(a,b){
+			var forums = []
 			for(i in b){
-				subforums.push({
+				forums.push({
 					id: b[i].id,
 					name: b[i].name,
 					desc: b[i].desc,
@@ -19,8 +19,8 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 			}
 			var output = tmp(Object.assign({
 				logged_in: userinfo.loggedin,
-				subforums: subforums,
-				subforum_count: subforums.length
+				forums: forums,
+				forum_count: forums.length
 			}, userinfo));
 			res.write(output)
 			res.end()
@@ -41,13 +41,13 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 		if(!error){
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
-				if(data.newsubforums){
-					var sfs = JSON.parse(data.newsubforums)
+				if(data.newforums){
+					var sfs = JSON.parse(data.newforums)
 					
 					var i = 0;
 					function step(){
-						database.get("SELECT COUNT(*) AS cnt FROM subforums", function(a,b){
-							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
+						database.get("SELECT COUNT(*) AS cnt FROM forums", function(a,b){
+							database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
 								i++;
 								if(sfs.length > i){
 									step()
@@ -67,7 +67,7 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 					
 					var i = 0;
 					function step(){
-						database.run("UPDATE subforums SET name=?, desc=?,_order=? WHERE id=?", [edits[i][1], edits[i][2], edits[i][3], edits[i][0]], function(){
+						database.run("UPDATE forums SET name=?, desc=?,_order=? WHERE id=?", [edits[i][1], edits[i][2], edits[i][3], edits[i][0]], function(){
 							i++;
 							if(edits.length > i){
 								step()
@@ -80,6 +80,20 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 						res.end()
 					} else {
 						step()
+					}
+				} else if(data.command) {
+					var args = querystring.parse(decodeURIComponent(data.arguments))
+					if(data.command == "update_announcement") {
+						var chg = args.changes
+						cache_data.announcement = chg
+						database.run("UPDATE info SET data=? WHERE name='announcement'", [chg], function(){
+							res.writeHead(302, {
+								"Location": "/admin/editannouncement"
+							})
+							res.end()
+						})
+					} else {
+						res.end()
 					}
 				} else {
 					res.end()

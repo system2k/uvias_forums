@@ -25,14 +25,14 @@ module.exports = function(){
 	pre_load("img", "online", "./src/image/online.png")
 	pre_load("img", "thread", "./src/image/thread.png")
 	pre_load("img", "thread_read", "./src/image/thread_read.png")
-	pre_load("img", "subforum", "./src/image/subforum.png")
+	pre_load("img", "forum", "./src/image/forum.png")
 	pre_load("img", "expand", "./src/image/expand.png")
 	pre_load("img", "collapse", "./src/image/collapse.png")
 	
 	pre_load("js", "adminpanel", "./src/javascripts/adminpanel.js")
 	
 	var page_main = require("./pages/main.js")
-	var page_SubForum = require("./pages/sf.js")
+	var page_Forum = require("./pages/sf.js")
 	var page_thread = require("./pages/thread.js")
 	var page_register = require("./pages/register.js")
 	var page_post = require("./pages/post.js")
@@ -40,7 +40,13 @@ module.exports = function(){
 	var page_logout = require("./pages/logout.js")
 	var page_reply = require("./pages/reply.js")
 	var page_admin = require("./pages/admin.js")
+	var page_admin_editannouncement = require("./pages/admin_editannouncement.js")
+	var page_admin_editforums = require("./pages/admin_editforums.js")
 	var page_profile = require("./pages/profile.js")
+	
+	var cache_data = {
+		announcement: ""
+	}
 	
 	var pw_encryption = "sha512WithRSAEncryption";
 	encryptHash = function(pass, salt) {
@@ -168,8 +174,8 @@ module.exports = function(){
 			lastCommand = rawCommand
 		}
 		if(cmd[0] === "update" && cmd[1] === "post-count") {
-			database.run("update subforums set post_count = (select count(*) from threads where subforum=subforums.id and type=0 and deleted=0)", function(){
-				log("Updated subforum post count to correct numbers", "l_green")
+			database.run("update forums set post_count = (select count(*) from threads where forum=forums.id and type=0 and deleted=0)", function(){
+				log("Updated forum post count to correct numbers", "l_green")
 				database.run("update users set posts = (select count(*) from threads where user=users.id and deleted=0)", function(){
 					log("Updated user post count to correct numbers", "l_green")
 					log("Operation completed", "l_green")
@@ -197,18 +203,18 @@ module.exports = function(){
 					console.log(e)
 				} else {
 					log("Added admin account successfully (username: admin, password: admin)", "l_green")
-					database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Subforum 1", "Sample subforum generated automatically using the console", Date.now(), 1], function(e){
+					database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Forum 1", "Sample forum generated automatically using the console", Date.now(), 1], function(e){
 						if(e) {
-							log("An error occured while creating sample subforum #1:", "red")
+							log("An error occured while creating sample forum #1:", "red")
 							console.log(e)
 						} else {
-							log("Added sample subforum #1 successfully", "l_green")
-							database.run("INSERT INTO subforums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Subforum 2", "Another subforum generated automatically using the console", Date.now(), 2], function(e){
+							log("Added sample forum #1 successfully", "l_green")
+							database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Forum 2", "Another forum generated automatically using the console", Date.now(), 2], function(e){
 								if(e) {
-									log("An error occured while creating sample subforum #2:", "l_red")
+									log("An error occured while creating sample forum #2:", "l_red")
 									console.log(e)
 								} else {
-									log("Added sample subforum #2 successfully", "l_green")
+									log("Added sample forum #2 successfully", "l_green")
 									console.log("Sample data creation complete.")
 								}
 							})
@@ -227,34 +233,75 @@ module.exports = function(){
 		if(typeof a == "object" && a !== null) {
 			if(a.code == "SQLITE_ERROR") {
 				log("Creating tables...", "l_green")
-				database.run("create table info(name)", function(){
+				
+				
+				
+				database.run("create table info(name text, data text)", function(){
 					console.log("Created 'info'")
-					database.run("insert into info values('init')", function(){
-						console.log("Marked database as initialized")
-						database.run("create table subforums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer)", function(){
-							console.log("Created 'subforums'")
-							database.run("create table threads(id integer primary key, subforum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)", function(){
-								console.log("Created 'threads'")
-								database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer)", function(){
-									console.log("Created 'users'")
-									database.run("create table session(user_id integer, expire_date integer, key text)", function(){
-										console.log("Created 'session'")
-										database.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, subforum_id integer)", function(){
-											console.log("Created 'views'")
-											log("Table creation complete.", "l_green")
-											run()
-										})
-									})
-								})
-							})
-						})
-					})
+					db_initialize()
 				})
+				
+				function db_initialize(){
+					database.run("insert into info values('init', '')", function(){
+						console.log("Marked database as initialized")
+						db_announcement()
+					})
+				}
+				
+				function db_announcement(){
+					database.run("insert into info values('announcement', 'No announcement')", function(){
+						console.log("Added announcement")
+						db_forums()
+					})
+				}
+				
+				function db_forums(){
+					database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer)", function(){
+						console.log("Created 'forums'")
+						db_threads()
+					})
+				}
+				
+				function db_threads(){
+					database.run("create table threads(id integer primary key, forum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)", function(){
+						console.log("Created 'threads'")
+						db_users()
+					})
+				}
+				
+				function db_users(){
+					database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer)", function(){
+						console.log("Created 'users'")
+						db_session()
+					})
+				}
+				
+				function db_session(){
+					database.run("create table session(user_id integer, expire_date integer, key text)", function(){
+						console.log("Created 'session'")
+						db_views()
+					})
+				}
+				
+				function db_views(){
+					database.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer)", function(){
+						console.log("Created 'views'")
+						log("Table creation complete.", "l_green")
+						begin()
+					})
+				}
 			}
 		} else {
-			run();
+			begin();
 		}
 	})
+	
+	function begin(){
+		database.get("select data from info where name='announcement'", function(err, anc){
+			cache_data.announcement = anc.data
+			start_server()
+		})
+	}
 	
 	var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 	var _data_ago = ["minute", "hour", "day", "month", "year"]
@@ -329,12 +376,14 @@ module.exports = function(){
 		database.all("delete from session where expire_date <= ?", [Date.now()])
 	}, 1000*60) // check every minute
 	
-	/*process.on('uncaughtException', function(err) {
+	process.on('uncaughtException', function(err) {
 		if(err.errno === 'EADDRINUSE') {
 			console.log("The port " + port + " is already in use. The server cannot start")
+		} else {
+			console.log(err)
 		}
 		process.exit()
-	}); */
+	});
 	function server_(req, res) {
 		var d = domain.create()
 		d.on('error', function(er) {
@@ -367,7 +416,8 @@ module.exports = function(){
 						loggedin: loggedin,
 						top_rank: false,
 						page_path: path.href,
-						cookie: cookie
+						cookie: cookie,
+						announcement: cache_data.announcement
 					}
 					online_users[user_id] = Date.now()
 					if(loggedin) {
@@ -385,7 +435,8 @@ module.exports = function(){
 						loggedin: false,
 						top_rank: false,
 						page_path: path.href,
-						cookie: cookie
+						cookie: cookie,
+						announcement: cache_data.announcement
 					}
 					comp()
 				}
@@ -398,31 +449,37 @@ module.exports = function(){
 					
 				if(pathname == "") {
 					page_main(req, res, swig, database, parseCookie, userinfo)
+					
 				} else if(pathname == "favicon.ico") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["fav_icon"], "binary");
+					
 				} else if(pathname == "images/bar.gif") {
 					res.writeHead(200, {
 						"Content-Type": "image/gif"
 					})
 					res.end(pre_loaded_images["bar"], "binary");
+					
 				} else if(pathname == "images/barGray.gif") {
 					res.writeHead(200, {
 						"Content-Type": "image/gif"
 					})
 					res.end(pre_loaded_images["barGray"], "binary");
+					
 				} else if(pathname == "images/bottom_bar.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["bottom_bar"], "binary");
+					
 				} else if(pathname == "images/sidebar.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["sidebar"], "binary");
+					
 				} else if(pathname == "scripts/adminpanel.js") {
 					if(userinfo.top_rank === false){
 						res.writeHead(302, {
@@ -436,56 +493,72 @@ module.exports = function(){
 						})
 						res.end(pre_loaded_content["adminpanel"], "binary");
 					}
+					
 				} else if(pathname == "images/offline.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["offline"], "binary");
+					
 				} else if(pathname == "images/online.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["online"], "binary");
+					
 				} else if(pathname == "images/thread.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["thread"], "binary");
+					
 				} else if(pathname == "images/thread_read.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["thread_read"], "binary");
+					
 				} else if(pathname == "images/expand.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["expand"], "binary");
+					
 				} else if(pathname == "images/collapse.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["collapse"], "binary");
-				} else if(pathname == "images/subforum.png") {
+					
+				} else if(pathname == "images/forum.png") {
 					res.writeHead(200, {
 						"Content-Type": "image/png"
 					})
-					res.end(pre_loaded_images["subforum"], "binary");
+					res.end(pre_loaded_images["forum"], "binary");
+					
 				} else if(pathname.startsWith("sf/")){
-					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo, querystring)
+					page_Forum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo, querystring)
+					
 				} else if(pathname.startsWith("thread/")) {
 					page_thread(req, res, swig, database, pathname.substr(7), parseCookie, userinfo, date_created, querystring, online_users)
+					
 				} else if(pathname == "register") {
 					page_register(req, res, swig, querystring, database, encryptHash, crypto, url, parseCookie, userinfo)
+					
 				} else if(pathname.startsWith("post/")) {
 					page_post(req, res, swig, database, querystring, pathname.substr(5), parseCookie, userinfo)
+					
 				} else if(pathname == "login"){
 					page_login(req, res, database, querystring, checkHash, cookieExpireDate)
+					
 				} else if(pathname == "logout"){
 					page_logout(req, res, database, cookieExpireDate, parseCookie)
+					
 				} else if(pathname.startsWith("reply/")){
 					page_reply(req, res, database, pathname.substr(6), parseCookie, swig, querystring, userinfo)
-				} else if(pathname == "admin") {
+					
+				} else if(pathname.startsWith("admin")) {
+					pathname = pathname.substr(5)
 					if(userinfo.top_rank === false){
 						res.writeHead(302, {
 							"Location": "/admin"
@@ -493,10 +566,20 @@ module.exports = function(){
 						res.end()
 					}
 					if(userinfo.top_rank === true){
-						page_admin(req, res, swig, userinfo, database, date_created, querystring)
+						if(pathname == ""){
+							page_admin(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+						} else if(pathname == "/editannouncement") {
+							page_admin_editannouncement(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+						} else if(pathname == "/editforums") {
+							page_admin_editforums(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+						} else {
+							res.end("")
+						}
 					}
+					
 				} else if(pathname.startsWith("profile/")) {
 					page_profile(req, res, swig, database, pathname.substr(8), date_created, userinfo)
+					
 				} else {
 					res.statusCode = 404;
 					res.end("404: Page does not exist")
@@ -506,7 +589,7 @@ module.exports = function(){
 		})
 	}
 	
-	function run(){
+	function start_server(){
 		var server = http.createServer(server_)
 		server.listen(port, function() {
 			var addr = server.address();

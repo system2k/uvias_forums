@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Sidebar >> Edit forums
+	</h1>
+	<button onclick="addforum()" type="button">Create forum</button> <button onclick="editforums()" type="button">Edit all</button>
+	<div style="display:none;" id="sfc">{{forum_count}}</div>
+	<table style="width: 100%; table-layout: auto;" border="1">
+		<tbody id="forum_rows">
+			<tr>
+				<th colspan="7" style="background-color:#a8beff">
+					Manage Forums
+				</th>
+			</tr>
+			<tr style="background-color:#cecece">
+				<th>
+					ID
+				</th>
+				<th>
+					Name
+				</th>
+				<th>
+					Description
+				</th>
+				<th>
+					Date created
+				</th>
+				<th>
+					Thread count
+				</th>
+				<th>
+					Post count
+				</th>
+				<th>
+					Order
+				</th>
+			</tr>
+			{% for label in forums %}
+			<tr style="background-color: #cee7ff;" class="sfrow">
+				<td>
+					{{label.id}}
+				</td>
+				<td>
+					{{label.name}}
+				</td>
+				<td>
+					{{label.desc}}
+				</td>
+				<td>
+					{{label.date_created}}
+				</td>
+				<td>
+					{{label.thread_count}}
+				</td>
+				<td>
+					{{label.post_count}}
+				</td>
+				<td>
+					{{label._order}}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<button style="float:right" onclick="sendchanges()" type="button">OK</button>
+{% endblock %}

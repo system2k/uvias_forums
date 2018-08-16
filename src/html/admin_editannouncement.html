@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Sidebar >> Edit announcement
+	</h1>
+	<span>Message:</span>
+	<br>
+	<textarea cols="90" rows="6" id="announcement">{{announcement}}</textarea>
+	<br>
+	<button type="button" onclick="upd_announcement()">Submit announcement</button>
+{% endblock %}

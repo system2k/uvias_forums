@@ -2,9 +2,9 @@
 
 {% block content %}
 	<h1>
-		Subforums >> {{subforum_name}}
+		Forums >> {{forum_name}}
 	</h1>
-	<button onclick="location.href = '/post/{{subforum_id}}';" type="button">Create new thread</button>
+	<button onclick="location.href = '/post/{{forum_id}}';" type="button">Create new thread</button>
 	<br>
 	{% if pagebar.threadcount != 0 %}
 	<table style="width: 100%; table-layout: auto;" border=1>

@@ -1,14 +1,14 @@
 var addedTotal = 0;
 var addedData = [];
 
-var subforum_rows
+var forum_rows
 window.onload = function(){
-	subforum_rows = document.getElementById("subforum_rows")
+	forum_rows = document.getElementById("forum_rows")
 }
 
 var editMode = null;
 
-function addsubforum(){
+function addforum(){
 	if(editMode !== null && editMode !== 1) return
 	editMode = 1;
 	var idCount = parseInt(document.getElementById("sfc").innerText)
@@ -45,14 +45,14 @@ function addsubforum(){
 	tr.appendChild(td6)
 	tr.appendChild(td7)
 	
-	subforum_rows.appendChild(tr)
+	forum_rows.appendChild(tr)
 	addedData.push([td2, td3])
 }
 
 function sendchanges(){
 	if(editMode == 1){
 		var request = new XMLHttpRequest();
-		request.open('POST', window.location.pathname, true);
+		request.open('POST', "/admin", true);
 
 		request.onload = function() {
 			window.location.reload()
@@ -65,7 +65,7 @@ function sendchanges(){
 			newSFS.push([a,b])
 		}
 		
-		request.send("newsubforums=" + encodeURIComponent(JSON.stringify(newSFS)));
+		request.send("newforums=" + encodeURIComponent(JSON.stringify(newSFS)));
 	}
 	if(editMode == 2){
 		var ar = [];
@@ -79,7 +79,7 @@ function sendchanges(){
 		}
 		
 		var request = new XMLHttpRequest();
-		request.open('POST', window.location.pathname, true);
+		request.open('POST', "/admin", true);
 
 		request.onload = function() {
 			window.location.reload()
@@ -90,10 +90,10 @@ function sendchanges(){
 }
 
 var sfedit_inputs = [];
-function editsubforums(){
+function editforums(){
 	if(editMode !== null) return
 	editMode = 2
-	var chil = subforum_rows.children;
+	var chil = forum_rows.children;
 	for(var i = 0; i < chil.length; i++){
 		if(chil[i].className == "sfrow") {
 			var colChils = chil[i].children
@@ -108,17 +108,23 @@ function editsubforums(){
 			
 			input1.value = colChils[1].innerText
 			input2.value = colChils[2].innerText
-			input3.value = colChils[5].innerText
+			input3.value = colChils[6].innerText
 			
 			colChils[1].innerHTML = ""
 			colChils[2].innerHTML = ""
-			colChils[5].innerHTML = ""
+			colChils[6].innerHTML = ""
 			
 			colChils[1].appendChild(input1)
 			colChils[2].appendChild(input2)
-			colChils[5].appendChild(input3)
+			colChils[6].appendChild(input3)
 			
 			sfedit_inputs.push([colChils[0].innerText, input1, input2, input3])
 		}
 	}
+}
+
+function upd_announcement(){
+	FormSubmit("update_announcement", {
+		changes: document.getElementById("announcement").value
+	}, "/admin")
 }

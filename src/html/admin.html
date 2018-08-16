@@ -5,64 +5,45 @@
 	<h1>
 		Admin Panel
 	</h1>
-	<button onclick="addsubforum()" type="button">Create subforum</button> <button onclick="editsubforums()" type="button">Edit all</button>
-	<div style="display:none;" id="sfc">{{subforum_count}}</div>
-	<table style="width: 100%; table-layout: auto;" border="1">
-		<tbody id="subforum_rows">
+	<table style="width: 100%; table-layout: auto; font-family: Verdana;">
+		<tbody>
 			<tr>
-				<th colspan="7" style="background-color:#a8beff">
-					Manage Subforums
+				<th style="background-image: url('/images/bar.gif'); color: white; height: 20px;">
+					Administrator tools
 				</th>
 			</tr>
-			<tr style="background-color:#cecece">
-				<th>
-					ID
-				</th>
-				<th>
-					Name
-				</th>
-				<th>
-					Description
-				</th>
-				<th>
-					Date created
-				</th>
-				<th>
-					Thread count
-				</th>
-				<th>
-					Post count
-				</th>
-				<th>
-					Order
-				</th>
-			</tr>
-			{% for label in subforums %}
-			<tr style="background-color: #cee7ff;" class="sfrow">
-				<td>
-					{{label.id}}
-				</td>
-				<td>
-					{{label.name}}
-				</td>
-				<td>
-					{{label.desc}}
-				</td>
-				<td>
-					{{label.date_created}}
-				</td>
-				<td>
-					{{label.thread_count}}
-				</td>
-				<td>
-					{{label.post_count}}
-				</td>
-				<td>
-					{{label._order}}
+			<tr>
+				<td style="background-image: url('/images/barGray.gif');">
+					Forums
 				</td>
 			</tr>
-			{% endfor %}
+			<tr>
+				<td style="background-color: #cee7ff; height: 40px;">
+					<a href="/admin/editforums" class="rowText">Edit and add forums</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="background-image: url('/images/barGray.gif');">
+					Sidebar
+				</td>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff; height: 40px;">
+					<a href="/admin/editannouncement" class="rowText">Edit announcement</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="background-image: url('/images/barGray.gif');">
+					Forum groups
+				</td>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff; height: 40px;">
+					<a href="/admin/editforumgroups" class="rowText">Edit and add forum groups</a>
+				</td>
+			</tr>
 		</tbody>
 	</table>
-	<button style="float:right" onclick="sendchanges()" type="button">OK</button>
+	
+	
 {% endblock %}

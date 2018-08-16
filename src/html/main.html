@@ -2,7 +2,7 @@
 
 {% block content %}
 	<h1>
-		Subforums
+		Forums
 	</h1>
 	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
@@ -19,13 +19,13 @@
 			</tr>
 			<tr>
 				<td colspan="4" style="background-image: url('/images/barGray.gif');">
-					<p style="color: black; font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText">Main subforums</p>
+					<p style="color: black; font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText">Main forums</p>
 				</td>
 			</tr>
-			{% for label in subforums %}
+			{% for label in forums %}
 			<tr style="height: 50px;">
 				<td style="width: 30px; background-color: #cee7ff;">
-					<img src="/images/subforum.png">
+					<img src="/images/forum.png">
 				</td>
 				<td style="background-color: #b9dcff;">
 					<a href="/sf/{{label.id}}" class="rowText">{{label.name}}</a>
