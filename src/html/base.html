@@ -35,9 +35,11 @@
 			.sidebarTable {
 				background-color: #FFFFFF;
 				width: 100%;
-				border: solid;
 				border-width: 1px;
 				border-spacing: 1px;
+				border-collapse: separate;
+				border-style: solid;
+				border-color: #013DA4;
 			}
 			.sidebarTablePanelHolder {
 				padding: 5;
@@ -71,6 +73,27 @@
 			}
 			.sblink:active, a.control:active {
 				color: initial
+			}
+			input {
+				box-sizing: border-box;
+				-webkit-box-sizing: border-box;
+				-moz-box-sizing: border-box;
+			}
+			
+			.defaultTable {
+				width: 100%;
+				table-layout: auto;
+				font-family: Verdana;
+				border-spacing: 1px;
+				border-collapse: separate;
+				border-width: 1px;
+				border-style: solid;
+				border-color: #013DA4;
+			}
+			.defaultTable th {
+				background-image: url('/images/bar.gif');
+				color: white;
+				height: 25px;
 			}
 		</style>
 		
@@ -180,6 +203,7 @@
 								</table>
 								{% endif %}
 								
+								{% if announcement != "No announcement" %}
 								<div class='sidebarSeparator'></div>
 								
 								<table class='sidebarTable'>
@@ -196,6 +220,8 @@
 										</tr>
 									</tbody>
 								</table>
+								{% endif %}
+								
 								
 								<div class='sidebarSeparator'></div>
 								

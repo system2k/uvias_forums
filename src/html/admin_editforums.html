@@ -3,8 +3,11 @@
 {% block content %}
 	<script src="/scripts/adminpanel.js"></script>
 	<h1>
-		Admin Panel >> Sidebar >> Edit forums
+		Admin Panel >> Forums >> Edit forums
 	</h1>
+	
+	<!--
+	
 	<button onclick="addforum()" type="button">Create forum</button> <button onclick="editforums()" type="button">Edit all</button>
 	<div style="display:none;" id="sfc">{{forum_count}}</div>
 	<table style="width: 100%; table-layout: auto;" border="1">
@@ -65,4 +68,43 @@
 		</tbody>
 	</table>
 	<button style="float:right" onclick="sendchanges()" type="button">OK</button>
+	
+	-->
+	
+	<table class="defaultTable">
+		<tbody id="forum_rows">
+			<tr style="background-color:#cecece">
+				<th style="width: 20px">
+					ID
+				</th>
+				<th>
+					Name
+				</th>
+			</tr>
+			
+			
+			{% for label in forum_groups %}
+				<tr style="background-color: orange;" class="sfrow">
+					<td>
+						{{label.id}}
+					</td>
+					<td>
+						{{label.name}}
+					</td>
+				</tr>
+				{% for forum in label.forums %}
+					<tr style="background-color: #cee7ff;" class="sfrow">
+						<td>
+							{{forum.id}}
+						</td>
+						<td>
+							<button style="padding: 2px 17px;" type="button">Enter</button>&nbsp;<a href="/admin/edit/1">{{forum.name}}</a>
+						</td>
+					</tr>
+				{% endfor %}
+			{% endfor %}
+			
+			
+		</tbody>
+	</table>
 {% endblock %}

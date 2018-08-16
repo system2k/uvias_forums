@@ -42,6 +42,8 @@ module.exports = function(){
 	var page_admin = require("./pages/admin.js")
 	var page_admin_editannouncement = require("./pages/admin_editannouncement.js")
 	var page_admin_editforums = require("./pages/admin_editforums.js")
+	var page_admin_editforumgroups = require("./pages/admin_editforumgroups.js")
+	var page_admin_createforum = require("./pages/admin_createforum.js")
 	var page_profile = require("./pages/profile.js")
 	
 	var cache_data = {
@@ -191,37 +193,49 @@ module.exports = function(){
 			lastCommand = rawCommand
 		}
 		if(cmd[0] === "add" && cmd[1] === "sample-data") {
-			console.log("Are you sure you want to add sample data?\nThis must only be executed right after the database has been created and has no data on it.\nType 'yes' to continue adding sample data.\nUse at your own risk.")
+			console.log("Are you sure you want to add sample data?\nThis must be run when the database is empty.\nType \"yes\" to continue.")
 			addsampledataconfirm = true
 			lastCommand = rawCommand
 		}
 		if(cmd[0] === "yes" && addsampledataconfirm) {
 			console.log("Adding data...")
+			
+			
 			database.run("insert into users values(null, ?, ?, ?, 0, 2)", ["Admin", encryptHash("admin"), Date.now()], function(e){
 				if(e) {
 					log("An error occured while creating the admin account:", "l_red")
 					console.log(e)
 				} else {
 					log("Added admin account successfully (username: admin, password: admin)", "l_green")
-					database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Forum 1", "Sample forum generated automatically using the console", Date.now(), 1], function(e){
-						if(e) {
-							log("An error occured while creating sample forum #1:", "red")
-							console.log(e)
-						} else {
-							log("Added sample forum #1 successfully", "l_green")
-							database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", ["Forum 2", "Another forum generated automatically using the console", Date.now(), 2], function(e){
-								if(e) {
-									log("An error occured while creating sample forum #2:", "l_red")
-									console.log(e)
-								} else {
-									log("Added sample forum #2 successfully", "l_green")
-									console.log("Sample data creation complete.")
-								}
-							})
-						}
-					})
+					sd_forum1()
 				}
 			})
+			
+			function sd_forum1(){
+				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", Date.now(), 1], function(e){
+					if(e) {
+						log("An error occured while creating sample forum #1:", "red")
+						console.log(e)
+					} else {
+						log("Added sample forum #1 successfully", "l_green")
+						sd_forum2()
+					}
+				})
+			}
+			
+			function sd_forum2(){
+				database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", Date.now(), 2], function(e){
+					if(e) {
+						log("An error occured while creating sample forum #2:", "l_red")
+						console.log(e)
+					} else {
+						log("Added sample forum #2 successfully", "l_green")
+						console.log("Sample data creation complete.")
+					}
+				})
+			}
+			
+			
 		}
 		if(cmd[0] === "repeat") {
 			console.log("Repeating last command: " + lastCommand)
@@ -256,7 +270,7 @@ module.exports = function(){
 				}
 				
 				function db_forums(){
-					database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer)", function(){
+					database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)", function(){
 						console.log("Created 'forums'")
 						db_threads()
 					})
@@ -286,10 +300,24 @@ module.exports = function(){
 				function db_views(){
 					database.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer)", function(){
 						console.log("Created 'views'")
-						log("Table creation complete.", "l_green")
-						begin()
+						db_forum_groups()
 					})
 				}
+				
+				function db_forum_groups(){
+					database.run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)", function(){
+						console.log("Created 'forum_groups'")
+						db_forum_group_main()
+					})
+				}
+				
+				function db_forum_group_main(){
+				database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1], function(e){
+					console.log("Created 'Main forums' forum group")
+					log("Table creation complete.", "l_green")
+					begin()
+				})
+			}
 			}
 		} else {
 			begin();
@@ -568,10 +596,19 @@ module.exports = function(){
 					if(userinfo.top_rank === true){
 						if(pathname == ""){
 							page_admin(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+							
 						} else if(pathname == "/editannouncement") {
 							page_admin_editannouncement(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+							
 						} else if(pathname == "/editforums") {
 							page_admin_editforums(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+							
+						} else if(pathname == "/editforumgroups") {
+							page_admin_editforumgroups(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+							
+						} else if(pathname == "/createforum") {
+							page_admin_createforum(req, res, swig, userinfo, database, date_created, querystring, cache_data)
+							
 						} else {
 							res.end("")
 						}

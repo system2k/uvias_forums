@@ -16,7 +16,7 @@
 		</select>
 	</div>
 	{% if !displayMode %}
-	<table style="width: 100%; table-layout: auto;" border=1>
+	<table class="defaultTable" style="font-family: initial;">
 		<tbody>
 			<tr>
 				<td style="text-align: right; background-image: url('/images/barGray.gif');" colspan="2">
@@ -24,10 +24,10 @@
 				</td>
 			</tr>
 			<tr>
-				<th class="sfhead" style="width: 128px; text-align: left;">
+				<th style="width: 128px; text-align: left;">
 					User
 				</th>
-				<th class="sfhead" style="text-align: left; word-break: break-all;">
+				<th style="text-align: left; word-break: break-all;">
 					Thread: {{thread_title}}
 				</th>
 			</tr>
@@ -173,7 +173,7 @@
 	</div>
 	{% endif %}
 	
-	<b style="font-family: Verdana; font-size: 0.6em">Page 1 of 1</b>
+	<b style="font-family: Verdana; font-size: 0.6em">Page {{pagebar.page}} of {{pagebar.pageCount}}</b>
 {% endblock %}
 
 {% block scriptcontent %}
@@ -206,15 +206,15 @@
 			}
 		});
 		var collapsed = {}
-		var collapsed_by = {}
-		function col(index, id, parent, threshold){
+		var collapsed_by = {} // when you collapse a post, collapse the parent post, and then expand that post, the replies to that post will stay the same state
+		
+		function col(index, id, parent, threshold){ // collapse or expand a post
 		
 			var coll = collapsed[index]
 		
-			var i = 0
 			var c_idx = index
 			
-			var imgPos = 0;
+			var imgPos = 0; // which column the collapse/expand icon is on
 			if(index != 0) imgPos = 1
 			if(!coll) {
 				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/expand.png"
@@ -222,29 +222,31 @@
 			} else {
 				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/collapse.png"
 			}
-			while(true){
-				var dat = posts[c_idx].id.split(":")
-				var idE = dat[0];
+			while(true){ // iterate over all posts, starting at the collapsed post
+				var dat = posts[c_idx].id.split(":") // get data of the post
+				var idE = dat[0]; 
 				var parentE = dat[1];
 				var thresholdE = dat[2]
 				
-				if(idE != id){
-					if(threshold < thresholdE) {
-						if(!coll) {
-							posts[c_idx].hidden = true
-							if(!collapsed_by[c_idx]) collapsed_by[c_idx] = [index]
+				if(idE != id){ // do not hide the collapsed post
+					if(threshold < thresholdE) { // to collapse, all replies under the post are hidden, by determining if the threshold is greater than the post. the deeper the nest, the greater the threshold
+						if(!coll) { // not collapsed)
+							//collapse the post
+							posts[c_idx].hidden = true // hide post
+							if(collapsed_by[c_idx] === undefined) collapsed_by[c_idx] = index // remember what post collapsed this post
 						}
-						if(coll) {
-							if(collapsed_by[c_idx]){
-								if(collapsed_by[c_idx][0] == index){
+						if(coll) { // collapsed
+							//expand the post
+							if(collapsed_by[c_idx] !== undefined){ // post was collapsed by any post
+								if(collapsed_by[c_idx] == index){ // show post only if it was expanded by the post that collapsed (hidden) it
 									posts[c_idx].hidden = false
 									delete collapsed_by[c_idx]
 								}
-							} else {
+							} else { // post was not collapsed by any post
 								posts[c_idx].hidden = false
 							}
 							
-							delete collapsed[index]
+							delete collapsed[index] // no longer a collapsed post
 						}
 					} else {
 						break
@@ -256,8 +258,6 @@
 				}
 				   
 				c_idx++
-				i++
-				if(i >= posts.length) break
 				if(c_idx >= posts.length) break
 			}
 		}

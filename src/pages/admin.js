@@ -47,7 +47,7 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 					var i = 0;
 					function step(){
 						database.get("SELECT COUNT(*) AS cnt FROM forums", function(a,b){
-							database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
+							database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", [sfs[i][0], sfs[i][1], Date.now(), parseInt(b.cnt)+1], function(){
 								i++;
 								if(sfs.length > i){
 									step()
@@ -92,6 +92,27 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 							})
 							res.end()
 						})
+						
+					} else if(data.command == "create_forum") {
+						var name = args.name
+						var desc = args.desc
+						var forum_group = args.forum_group
+						
+						database.get("select * from forum_groups where name=?", [forum_group], function(a, f_g){
+							if(!f_g) {
+								res.end()
+							} else {
+								var forum_group_id = f_g.id
+								
+								database.run("insert into forums values(null, ?, ?, ?, ?, ?, (SELECT (CASE WHEN EXISTS(SELECT id from forums limit 1) THEN (select _order from forums order by _order desc limit 1) ELSE 0 END)+1 as ord), ?)", [name, desc, Date.now(), 0, 0, forum_group_id], function(a,b){
+									res.writeHead(302, {
+										"Location": "/"
+									})
+									res.end()
+								})
+							}
+						})
+					
 					} else {
 						res.end()
 					}

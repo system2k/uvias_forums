@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Forum groups >> Edit forum groups
+	</h1>
+	
+	<table class="defaultTable">
+		<tbody id="forum_rows">
+			<tr style="background-color:#cecece">
+				<th style="width: 20px">
+					ID
+				</th>
+				<th>
+					Name
+				</th>
+			</tr>
+			
+			
+			{% for label in forum_groups %}
+				<tr style="background-color: orange;" class="sfrow">
+					<td>
+						{{label.id}}
+					</td>
+					<td>
+						<button style="padding: 2px 17px;" type="button" onclick="window.location.pathname='/admin/editforumgroups/{{label.id}}'">Enter</button>&nbsp;<a href="/admin/editforumgroups/{{label.id}}">{{label.name}}</a>
+					</td>
+				</tr>
+			{% endfor %}
+			
+			
+		</tbody>
+	</table>
+{% endblock %}

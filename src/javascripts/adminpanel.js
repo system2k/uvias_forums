@@ -128,3 +128,15 @@ function upd_announcement(){
 		changes: document.getElementById("announcement").value
 	}, "/admin")
 }
+function no_announcement(){
+	FormSubmit("update_announcement", {
+		changes: "No announcement"
+	}, "/admin")
+}
+function create_forum(){
+	FormSubmit("create_forum", {
+		name: document.getElementById("name").value,
+		desc: document.getElementById("desc").value,
+		forum_group: document.getElementById("forum_group").value
+	}, "/admin")
+}
