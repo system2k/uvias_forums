@@ -8,8 +8,21 @@ module.exports = function(req, res, userinfo, id){
 					var from_user;
 					
 					database.get("select * from users where id=?", message.from_id, function(e, u){
-						from_user = u
-						done()
+						
+						database.get("select * from views where message_id=? and type = 3", message.id, function(e, view){
+							if(view) {
+								d_s1()
+							} else {
+								database.run("insert into views values(?, ?, 3, null, null, null, ?)", [userinfo.user_id, Date.now(), message.id], function(){
+									d_s1()
+								})
+							}
+						})
+						
+						function d_s1(){
+							from_user = u
+							done()
+						}
 					})
 					
 					function done(){

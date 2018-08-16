@@ -4,9 +4,18 @@ module.exports = function(req, res, userinfo){
 		
 		var messages = []
 		
+		/*
+			views types:
+			0: Post views
+			1: Forum views
+			2: Range of threads marked as read in forums
+			3: Inbox messages viewed
+		*/
+		
 		database.all("select * from messages where to_id=? order by id desc", userinfo.user_id, function(e, msgs){
 			for(i in msgs){
 				msgs[i].date = date_created(msgs[i].date)
+				msgs[i].read = false;
 				messages.push(msgs[i])
 			}
 			part2()
@@ -18,11 +27,22 @@ module.exports = function(req, res, userinfo){
 				database.get("select * from users where id=?", messages[indx].from_id, function(e, u_id){
 					messages[indx].username = u_id.username
 					
-					indx++
-					if(indx >= messages.length) {
-						done()
-					} else {
-						step()
+					database.get("select * from views where message_id = ? and type = 3", messages[indx].id, function(e, view){
+						if(view) {
+							messages[indx].read = true
+							dn_s1()
+						} else {
+							dn_s1()
+						}
+					})
+					
+					function dn_s1(){
+						indx++
+						if(indx >= messages.length) {
+							done()
+						} else {
+							step()
+						}
 					}
 				}) 
 			}

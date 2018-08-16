@@ -176,7 +176,7 @@ module.exports = function(req, res, id, userinfo) {
 								if(userinfo.logged_in) {
 									database.get("select * from views where user=? and type=1 and forum_id=?", [userinfo.user_id, id], function(er,cont){
 										if(er || !cont) {
-											database.run("insert into views values(?, ?, 1, null, null, ?)", [userinfo.user_id, Date.now(), id], function(){
+											database.run("insert into views values(?, ?, 1, null, null, ?, null)", [userinfo.user_id, Date.now(), id], function(){
 												renderForums()
 											})
 										} else {
@@ -228,6 +228,7 @@ module.exports = function(req, res, id, userinfo) {
 				0: Post views
 				1: Forum views
 				2: Range of threads marked as read in forums
+				3: Inbox messages viewed
 			*/
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
@@ -238,7 +239,7 @@ module.exports = function(req, res, id, userinfo) {
 						} else {
 							database.get("select * from views where user=? and type=2 and forum_id=?", [userinfo.user_id, id], function(a,b){
 								if(a || !b) {
-									database.run("insert into views values(?, ?, 2, (select id from threads where forum = ? order by id desc limit 1), null, ?)", [userinfo.user_id, Date.now(), id, id], function(){
+									database.run("insert into views values(?, ?, 2, (select id from threads where forum = ? order by id desc limit 1), null, ?, null)", [userinfo.user_id, Date.now(), id, id], function(){
 										database.run("delete from views where user=? and type=0 and forum_id=?", [userinfo.user_id, id], function(){
 											res.writeHead(302, {
 												"Location": req.url

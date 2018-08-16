@@ -13,10 +13,76 @@
 				</th>
 			</tr>
 			<tr>
-				<td style="height: 256px; background-color: #cee7ff;">
-					
+				<td style="background-color: #cee7ff; padding: 5px;">
+					Search: <input style="width: 100%;" id="search_input" value="{{prev_str}}"></input>
+					<br>
+					<button type="button" onclick="search()">Search</button>
+					<br>
+					<span style="color: red; font-size: 0.7em;" id="search_err" hidden>You must enter at least one search term.</span>
 				</td>
 			</tr>
 		</tbody>
 	</table>
+	{% if found %}
+	{% if found.length > 0 %}
+	<br>
+	<table class="defaultTable">
+		<tbody id="forum_rows">
+			<tr>
+				<th>
+					Results for: "<span style="font-family: Arial; font-size: 13px;">{{prev_str}}</span>"
+				</th>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff; padding: 5px;">
+					<table style="width: 100%;" border="1">
+						<tbody>
+							{% for label in found %}
+							<tr style="background-color: #{{label.backgroundcol}}">
+								<td style="width: 50px; padding: 5px;">
+									#{{label.index}}
+								</td>
+								<td style="padding: 5px;">
+									<a href="/thread/{{label.thread}}" style="word-break: break-all;"><b>{{label.title}}</b></a>
+									<br>
+									<span style="font-size: 12px;">Posted by <a href="/profile/{{label.user}}">{{label.username}}</a> on July 3, 2017</span>
+									<br>
+									<span style="word-break: break-all;">{{label.body}}</span>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	{% else %}
+		<b>No posts match your query.</b>
+	{% endif %}
+	{% endif %}
+{% endblock %}
+
+{% block scriptcontent %}
+	<script>
+		function search(){
+			var sc = search_input.value
+			var s = sc.split(" ")
+			var term = false
+			for(var i = 0; i < s.length; i++){
+				if(s[i]) {
+					term = true
+					break
+				}
+			}
+			
+			if(term) {
+				FormSubmit("search", {
+					search: search_input.value
+				}, window.location.pathname)
+			} else {
+				search_err.hidden = false;
+			}
+		}
+	</script>
 {% endblock %}

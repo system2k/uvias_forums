@@ -14,7 +14,8 @@ module.exports = function(req, res, userinfo){
 	
 	function done(){
 		var output = tmp(Object.assign({
-			users: users
+			users: users,
+			letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
 		}, userinfo));
 		res.write(output)
 		res.end()

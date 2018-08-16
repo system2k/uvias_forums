@@ -3,8 +3,8 @@
     "version": "1.0.0",
     "description": "Forum",
     "dependencies": {
-		"sqlite3": "*",
-		"swig": "*"
+        "sqlite3": "*",
+        "swig": "*"
     },
     "scripts": {
         "start": "node index.js"

@@ -4,6 +4,7 @@ var http = require("http")
 url = require("url")
 var fs = require("fs")
 var sql = require("sqlite3").verbose()
+var domain = require("domain")
 swig = require("swig")
 querystring = require("querystring")
 crypto = require('crypto');
@@ -11,68 +12,36 @@ crypto = require('crypto');
 var port = 80
 postsPerPage = 30; // posts per page on threads
 database = new sql.Database("../database.db")
+/*
+var sql_cmds = ["get", "run", "all", "each"]
 
-get = async function(command, params) {
-	if(!params) params = []
-	return new Promise(function(r) {
-		database.get(command, params, function(err, res) {
-			if(err) {
-				return r(false)
+database = {}
+
+for(var i = 0; i < sql_cmds.length; i++){ // Fixes problem where errors in callbacks bypass Domains
+	var cmd = sql_cmds[i]
+	
+	database[cmd] = function() {
+		for(i in arguments){
+			var fc = arguments[i]
+			if(typeof fc === "function") {
+				var pargs = arguments[i]
+				arguments[i] = function(){
+					if("TEMPORARY" == "run") lastID = this.lastID // TEMPORARY replaced with command
+					try{pargs(...arguments)}catch(e){}
+				}
 			}
-			r(res)
-		})
-	})
-}
-
-run = async function(command, params) {
-	if(!params) params = []
-	var err = false
-	return new Promise(function(r, rej) {
-		database.run(command, params, function(err, res) {
-			if(err) {
-				return rej(err)
-			}
-			r(true)
-		})
-	})
-}
-
-all = async function(command, params) {
-	if(!params) params = []
-	return new Promise(function(r, rej) {
-		database.all(command, params, function(err, res) {
-			if(err) {
-				return rej(err)
-			}
-			r(res)
-		})
-	})
-}
-
-each = async function(command, params, callbacks) {
-	if(typeof params == "function") {
-		callbacks = params
-		params = []
+		}
+		db.TEMPORARY(...arguments)// TEMPORARY replaced with command
 	}
-	return new Promise(function(r, rej) {
-		database.each(command, params, callbacks, function(err, res) {
-			if(err) {
-				return rej(err)
-			}
-			r(res)
-		})
-	})
-}
+	
+	database[cmd] = database[cmd].toString()
+	database[cmd] = database[cmd].replace(/TEMPORARY/g, cmd)
+	
+	eval("database." + cmd + " = " + database[cmd])
+}*/
 
-exec = async function(command) {
-	return new Promise(function(r, rej) {
-		database.exec(command, function(err) {
-			if(err) {
-				return rej(err)
-			}
-			r(true)
-		})
-	})
+async function SQL() {
+	
 }
 
 var pre_loaded_images = {};
@@ -259,21 +228,24 @@ stdin.on("data", function(key){
 
 var lastCommand = ""
 var addsampledataconfirm = false;
-async function processCommand(cmd){
+function processCommand(cmd){
 	var rawCommand = cmd;
 	cmd = cmd.split(" ")
-	if(cmd[0] === "rank") {
-		var re = await run("update users set rank=? where username=? collate nocase", [cmd[2], cmd[1]])
-		.then(function(){log("Rank for " + cmd[1] + " set to: " + cmd[2], "l_green")})
-		.catch(function(){log("Error setting rank", "l_red")})
+	if(cmd[0] === "rank"){
+		database.run("update users set rank=? where username=?", [cmd[2], cmd[1]], function(a,b){
+			if(a == null) log("Rank for " + cmd[1] + " set to: " + cmd[2], "l_green")
+			if(a !== null) log("Error setting rank", "l_red")
+		})
 		lastCommand = rawCommand
 	}
 	if(cmd[0] === "update" && cmd[1] === "post-count") {
-		await run("update forums set post_count = (select count(*) from threads where forum=forums.id and type=0 and deleted=0)")
-		log("Updated forum post count to correct numbers", "l_green")
-		await run("update users set posts = (select count(*) from threads where user=users.id and deleted=0)")
-		log("Updated user post count to correct numbers", "l_green")
-		log("Operation completed", "l_green")
+		database.run("update forums set post_count = (select count(*) from threads where forum=forums.id and type=0 and deleted=0)", function(){
+			log("Updated forum post count to correct numbers", "l_green")
+			database.run("update users set posts = (select count(*) from threads where user=users.id and deleted=0)", function(){
+				log("Updated user post count to correct numbers", "l_green")
+				log("Operation completed", "l_green")
+			})
+		})
 		lastCommand = rawCommand
 	}
 	if(cmd[0] === "log-active-users") {
@@ -292,20 +264,41 @@ async function processCommand(cmd){
 		console.log("Adding data...")
 		
 		var date_now = Date.now()
-		await run("insert into users values(null, ?, ?, ?, 0, 2, ?)", ["Admin", encryptHash("admin"), date_now, date_now])
-		.catch(function(){log("An error occured while creating the admin account:", "l_red");console.log(e)})
-		log("Added admin account successfully (username: admin, password: admin)", "l_green")
+		database.run("insert into users values(null, ?, ?, ?, 0, 2, ?)", ["Admin", encryptHash("admin"), date_now, date_now], function(e){
+			if(e) {
+				log("An error occured while creating the admin account:", "l_red")
+				console.log(e)
+			} else {
+				log("Added admin account successfully (username: admin, password: admin)", "l_green")
+				sd_forum1()
+			}
+		})
 		
-		await run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1])
-		.catch(function(){log("An error occured while creating sample forum #1:", "red");console.log(e)})
-		log("Added sample forum #1 successfully", "l_green")
+		function sd_forum1(){
+			database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1], function(e){
+				if(e) {
+					log("An error occured while creating sample forum #1:", "red")
+					console.log(e)
+				} else {
+					log("Added sample forum #1 successfully", "l_green")
+					sd_forum2()
+				}
+			})
+		}
+		
+		function sd_forum2(){
+			database.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2], function(e){
+				if(e) {
+					log("An error occured while creating sample forum #2:", "l_red")
+					console.log(e)
+				} else {
+					log("Added sample forum #2 successfully", "l_green")
+					console.log("Sample data creation complete.")
+				}
+			})
+		}
 		
 		
-		await run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2])
-		.catch(function(){log("An error occured while creating sample forum #2:", "l_red");console.log(e)})
-		log("Added sample forum #2 successfully", "l_green")
-		
-		console.log("Sample data creation complete.")
 	}
 	if(cmd[0] === "repeat") {
 		console.log("Repeating last command: " + lastCommand)
@@ -313,57 +306,104 @@ async function processCommand(cmd){
 	}
 }
 
-async function init_db() {
-	if(!await get("select * from sqlite_master where type='table' and name='info'")) {
-		log("Creating tables...", "l_green")
-		
-		await run("create table info(name text, data text)")
-		console.log("Created 'info'")
-		
-		await run("insert into info values('init', '')")
-		console.log("Marked database as initialized")
-		
-		await run("insert into info values('announcement', 'No announcement')")
-		console.log("Added announcement")
-		
-		await run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)")
-		console.log("Created 'forums'")
-		
-		await run("create table threads(id integer primary key, forum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)")
-		console.log("Created 'threads'")
-		
-		await run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer, last_login integer)")
-		console.log("Created 'users'")
-		
-		await run("create table session(user_id integer, expire_date integer, key text)")
-		console.log("Created 'session'")
-		
-		await run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer, message_id integer)")
-		console.log("Created 'views'")
-		
-		await run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)")
-		console.log("Created 'forum_groups'")
-		
-		await run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1])
-		console.log("Created 'Main forums' forum group")
-		
-		await run("create table tracking(user integer, thread integer, date integer)")
-		console.log("Created 'tracking'")
-		
-		await run("create table messages(id integer PRIMARY KEY, date integer, from_id integer, to_id integer, subject text, body text)")
-		console.log("Created 'messages'")
-		log("Table creation complete.", "l_green")
-		begin()
+database.get("select * from info where name='init'", function(a, b){
+	if(typeof a == "object" && a !== null) {
+		if(a.code == "SQLITE_ERROR") {
+			log("Creating tables...", "l_green")
+			
+			
+			
+			database.run("create table info(name text, data text)", function(){
+				console.log("Created 'info'")
+				db_initialize()
+			})
+			
+			function db_initialize(){
+				database.run("insert into info values('init', '')", function(){
+					console.log("Marked database as initialized")
+					db_announcement()
+				})
+			}
+			
+			function db_announcement(){
+				database.run("insert into info values('announcement', 'No announcement')", function(){
+					console.log("Added announcement")
+					db_forums()
+				})
+			}
+			
+			function db_forums(){
+				database.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)", function(){
+					console.log("Created 'forums'")
+					db_threads()
+				})
+			}
+			
+			function db_threads(){
+				database.run("create table threads(id integer primary key, forum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)", function(){
+					console.log("Created 'threads'")
+					db_users()
+				})
+			}
+			
+			function db_users(){
+				database.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer, last_login integer)", function(){
+					console.log("Created 'users'")
+					db_session()
+				})
+			}
+			
+			function db_session(){
+				database.run("create table session(user_id integer, expire_date integer, key text)", function(){
+					console.log("Created 'session'")
+					db_views()
+				})
+			}
+			
+			function db_views(){
+				database.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer, message_id integer)", function(){
+					console.log("Created 'views'")
+					db_forum_groups()
+				})
+			}
+			
+			function db_forum_groups(){
+				database.run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)", function(){
+					console.log("Created 'forum_groups'")
+					db_forum_group_main()
+				})
+			}
+			
+			function db_forum_group_main(){
+				database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1], function(e){
+					console.log("Created 'Main forums' forum group")
+					db_tracking()
+				})
+			}
+			function db_tracking(){
+				database.run("create table tracking(user integer, thread integer, date integer)", function(){
+					console.log("Created 'tracking'")
+					db_messages()
+				})
+			}
+			function db_messages(){
+				database.run("create table messages(id integer PRIMARY KEY, date integer, from_id integer, to_id integer, subject text, body text)", function(e){
+					console.log("Created 'messages'")
+					log("Table creation complete.", "l_green")
+					begin()
+				})
+			}
+		}
 	} else {
-		begin()
+		begin();
 	}
-}
-init_db()
+})
 
-async function begin(){
-	var anc = await get("select data from info where name='announcement'")
-	cache_data.announcement = anc.data
-	start_server()
+function begin(){
+	database.get("select data from info where name='announcement'", function(err, anc){
+		cache_data.announcement = anc.data
+		start_server()
+	})
 }
 
 var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -490,7 +530,14 @@ var Images = {
 }
 
 function server_(req, res) {
-	(async function(){
+	var d = domain.create()
+	d.on('error', function(er) {
+	   res.statusCode = 500;
+	   res.end("500: An error occured")
+	})
+	d.add(req)
+	d.add(res)
+	d.run(function(){
 		var path = url.parse(req.url)
 		
 		var cookie = req.headers.cookie
@@ -505,57 +552,61 @@ function server_(req, res) {
 		var pathname = path.pathname
 		if(pathname.charAt(0) === "/") pathname = pathname.substr(1)
 		
-		// get user information
-		var b = await get("select user_id from session where key=?", sid)
-		var user_id = undefined
-		if(b) {
-			var usr = await get("select username from users where id=?", b.user_id)
-			user_id = b.user_id;
-			logged_in = user_id != undefined
-			var rank = 0;
-			userinfo = {
-				sid: sid,
-				user_id: user_id,
-				logged_in: logged_in,
-				top_rank: false,
-				page_path: path.href,
-				cookie: cookie,
-				announcement: cache_data.announcement,
-				username: usr.username,
-				inbox_unread: 0
-			}
-			online_users[user_id] = Date.now()
-			
-			if(!Images[pathname]) {
-				var view = await get("select count(*) as cnt from views where user=? and type=3", user_id)
-				var count = view.cnt
-				var msgs = await get("select count(*) as cnt from messages where to_id=?", user_id)
-				var message_count = msgs.cnt
-				var not_read = message_count - count
-				userinfo.inbox_unread = not_read
-				nxt()
+		database.get("select user_id from session where key=?", [sid], function(a, b){
+			var user_id = undefined
+			if(b){
+				database.get("select username from users where id=?", b.user_id, function(e, usr){
+					user_id = b.user_id;
+					logged_in = user_id != undefined
+					var rank = 0;
+					userinfo = {
+						sid: sid,
+						user_id: user_id,
+						logged_in: logged_in,
+						top_rank: false,
+						page_path: path.href,
+						cookie: cookie,
+						announcement: cache_data.announcement,
+						username: usr.username,
+						inbox_unread: 0
+					}
+					online_users[user_id] = Date.now()
+					
+					if(!Images[pathname]) {
+						database.get("select count(*) as cnt from views where user=? and type=3", user_id, function(e, view){
+							var count = view.cnt
+							database.get("select count(*) as cnt from messages where to_id=?", user_id, function(e, msgs){
+								var message_count = msgs.cnt
+								var not_read = message_count - count
+								userinfo.inbox_unread = not_read
+								nxt()
+							})
+						})
+					} else {
+						nxt()
+					}
+					function nxt(){
+						database.get("select rank from users where id=?", [user_id], function(a, b){
+							userinfo.top_rank = b.rank == 1 || b.rank == 2
+							comp()
+						})
+					}
+				})
 			} else {
-				nxt()
-			}
-			async function nxt(){
-				var b = await get("select rank from users where id=?", user_id)
-				userinfo.top_rank = b.rank == 1 || b.rank == 2
+				userinfo = {
+					sid: "",
+					user_id: 0,
+					logged_in: false,
+					top_rank: false,
+					page_path: path.href,
+					cookie: cookie,
+					announcement: cache_data.announcement
+				}
 				comp()
 			}
-		} else {
-			userinfo = {
-				sid: "",
-				user_id: 0,
-				logged_in: false,
-				top_rank: false,
-				page_path: path.href,
-				cookie: cookie,
-				announcement: cache_data.announcement
-			}
-			comp()
-		}
+		})
 		
-		// get page from url
+		
 		function comp(){
 			if(Images[pathname]) {
 				res.writeHead(200, {
@@ -685,9 +736,7 @@ function server_(req, res) {
 				res.end("404: Page does not exist")
 			}
 		}
-	})().catch(function(e){
-		res.statusCode = 500;
-		res.end("500: An error occured")
+		
 	})
 }
 

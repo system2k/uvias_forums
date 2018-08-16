@@ -181,7 +181,11 @@
 													<br>
 													<a href="/search" class="sblink">Search</a>
 													<br>
+													{% if inbox_unread === 0 %}
 													<a href="/inbox" class="sblink">Inbox</a>
+													{% else %}
+													<a href="/inbox" class="sblink">Inbox ({{inbox_unread}})</a>
+													{% endif %}
 													{% if top_rank %}
 													<br>
 													<a href="/admin" class="sblink">Admin panel</a>

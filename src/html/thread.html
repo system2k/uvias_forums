@@ -39,9 +39,9 @@
 			<tr style="height: 145px;">
 				<td style="vertical-align:top; width: 180px; background-color: #{% if label.alternate == 0 %}6fb7ff{% else %}95caff{% endif %}; word-break: break-all; font-size: 13px; padding: 3px;">
 					{% if label.online %}
-					<img src="/images/online.png">
+					<img src="/images/online.png" alt="User {{label.username}} is online">
 					{% else %}
-					<img src="/images/offline.png">
+					<img src="/images/offline.png" alt="User {{label.username}} is offline">
 					{% endif %}
 					<b><a href="/profile/{{label.userid}}" style="font-size: 15px">{{label.username}}</a></b>
 					<br>
@@ -102,7 +102,7 @@
 					</td>
 					{% endif %}
 					<td style="width: 1px; vertical-align: top">
-						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})" style="margin-right: 3px;{% if label.children_count == 0 %} visibility: hidden;{% endif %}">
+						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})" style="margin-right: 3px;{% if label.children_count == 0 %} visibility: hidden;{% endif %}" alt="Collapse or expand comment">
 					</td>
 					<td>
 						<div style="width: 100%">
