@@ -4,10 +4,10 @@
 	<h1>
 		Subforums
 	</h1>
-	<table style="width: 100%" border=1>
+	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
 			<tr>
-				<th class="sfhead" style="width: 82%">
+				<th class="sfhead" colspan="2">
 					Name
 				</th>
 				<th class="sfhead" style="width: 9%">
@@ -18,22 +18,25 @@
 				</th>
 			</tr>
 			<tr>
-				<td colspan="3" style="background-image: url('/images/barGray.gif');">
+				<td colspan="4" style="background-image: url('/images/barGray.gif');">
 					<p style="color: black; font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText">Main subforums</p>
 				</td>
 			</tr>
 			{% for label in subforums %}
 			<tr style="height: 50px;">
+				<td style="width: 30px; background-color: #cee7ff;">
+					<img src="/images/subforum.png">
+				</td>
 				<td style="background-color: #b9dcff;">
 					<a href="/sf/{{label.id}}" class="rowText">{{label.name}}</a>
 					<br>
 					<p class="rowText" style="font-size: 13px; color: #414141">{{label.desc}}</p>
 				</td>
 				<td style="background-color: #cee7ff;">
-					<p class="rowText">{{label.thread_count}}</p>
+					<p class="rowText" style="text-align: center">{{label.thread_count}}</p>
 				</td>
 				<td style="background-color: #b9dcff;">
-					<p class="rowText">{{label.post_count}}</p>
+					<p class="rowText" style="text-align: center">{{label.post_count}}</p>
 				</td>
 			</tr>
 			{% endfor %}

@@ -54,10 +54,12 @@ module.exports = function(req, res, swig, database, querystring, id, parseCookie
 								database.get("select thread_count from subforums where id=?", [id], function(a,b){
 									database.run("update subforums set thread_count=? where id=?", [parseInt(b.thread_count)+1, id], function(a,b){
 										database.run("update users set posts = posts + 1 where id=?", [userinfo.user_id], function(a,b){
-											res.writeHead(302, {
-												"Location": "/thread/" + this.lastID
+											database.run("update subforums set post_count=post_count+1 where id=?", [id], function(a,b){
+												res.writeHead(302, {
+													"Location": "/thread/" + this.lastID
+												})
+												res.end()
 											})
-											res.end()
 										})
 									})
 								})

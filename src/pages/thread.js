@@ -16,7 +16,24 @@ function joindate_label(timestamp){
 	return mth + " " + day + ", " + yer
 }
 
-module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users) {
+function navigate(nav, path) {
+	for(var i = 1; i < path.length; i++){
+		var ch = nav.children;
+		if(!ch) {
+			return false
+		} else {
+			for(z in ch){
+				if(ch[z].id == path[i]) {
+					nav = ch[z]
+					break
+				}
+			}
+		}
+	}
+	return nav
+}
+
+module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, displayMode) {
 	var method = req.method.toLowerCase()
 	if(method == "get"){
 		var tmp = swig.compileFile("./src/html/thread.html")
@@ -66,93 +83,222 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				})
 				
 				var alternate = 0;
+				
+				
 				function threadPage(){
 					if(b.type == 0){
 						database.get("select name from subforums where id=?", [b.subforum], function(err, sf){
-							var posts = [
-								{
-									username: b.user,
-									title: b.title,
-									post_date: date_created(b.date_created),
-									body: escapeBody(b.body),
-									replyurl: "/reply/" + id,
-									postcount: 0,
-									consolas: !!b.font,
-									owner: false,
-									id: b.id,
-									type: 0,
-									redir: JSON.stringify("/sf/" + b.subforum),
-									joindate: 0,
-									userid: b.user,
-									alternate: alternate,
-									online: !!online_users[b.user]
-								}
-							]
-							alternate++
-							if(b.user == userinfo.user_id){
-								posts[0].owner = true
-							}
-							
-							database.all("select * from threads where type=1 and thread=? and deleted = 0", [id], function(a,replies){
-								for(i in replies){
-									var owner = replies[i].user == userinfo.user_id
-									posts.push({
-										username: replies[i].user,
-										title: replies[i].title,
-										post_date: date_created(replies[i].date_created),
-										body: escapeBody(replies[i].body),
-										replyurl: "/reply/" + replies[i].id,
+							if(!displayMode){
+								var posts = [
+									{
+										username: b.user,
+										title: b.title,
+										post_date: date_created(b.date_created),
+										body: escapeBody(b.body),
+										replyurl: "/reply/" + id,
 										postcount: 0,
-										consolas: !!replies[i].font,
-										owner: owner,
-										id: replies[i].id,
-										type: 1,
-										redir: "\"\"",
+										consolas: !!b.font,
+										owner: false,
+										id: b.id,
+										type: 0,
+										redir: JSON.stringify("/sf/" + b.subforum),
 										joindate: 0,
-										userid: replies[i].user,
+										userid: b.user,
 										alternate: alternate,
-										online: !!online_users[replies[i].user]
-									})
-									alternate++
-									alternate %= 2
+										online: !!online_users[b.user]
+									}
+								]
+								alternate++
+								if(b.user == userinfo.user_id){
+									posts[0].owner = true
 								}
-								var usernames = [];
-								var postcounts = [];
-								var joindates = []
-								var indx = 0;
-								function getall(){
-									database.get("select * from users where id=?", [posts[indx].username], function(a,usr){
-										indx++;
-										usernames.push(usr.username)
-										postcounts.push(usr.posts)
-										joindates.push(usr.date_joined)
-										if(posts.length > indx){
-											getall()
-										} else {
-											complete()
+								
+								database.all("select * from threads where type=1 and thread=? and deleted = 0", [id], function(a,replies){
+									for(i in replies){
+										var owner = replies[i].user == userinfo.user_id
+										posts.push({
+											username: replies[i].user,
+											title: replies[i].title,
+											post_date: date_created(replies[i].date_created),
+											body: escapeBody(replies[i].body),
+											replyurl: "/reply/" + replies[i].id,
+											postcount: 0,
+											consolas: !!replies[i].font,
+											owner: owner,
+											id: replies[i].id,
+											type: 1,
+											redir: "\"\"",
+											joindate: 0,
+											userid: replies[i].user,
+											alternate: alternate,
+											online: !!online_users[replies[i].user]
+										})
+										alternate++
+										alternate %= 2
+									}
+									var usernames = [];
+									var postcounts = [];
+									var joindates = []
+									var indx = 0;
+									function getall(){
+										database.get("select * from users where id=?", [posts[indx].username], function(a,usr){
+											indx++;
+											usernames.push(usr.username)
+											postcounts.push(usr.posts)
+											joindates.push(usr.date_joined)
+											if(posts.length > indx){
+												getall()
+											} else {
+												complete()
+											}
+										})
+									}
+									getall()
+									function complete(){
+										for(i in usernames){
+											posts[i].username = usernames[i]
+											posts[i].postcount = postcounts[i]
+											posts[i].joindate = joindate_label(joindates[i])
 										}
-									})
+										var output = tmp(Object.assign({
+											subforum_name: sf.name,
+											logged_in: userinfo.loggedin,
+											thread_title: b.title,
+											posts: posts,
+											nextThread: next_thread_id,
+											prevThread: prev_thread_id,
+											displayMode: displayMode
+										}, userinfo));
+										
+										res.write(output)
+										res.end()
+									}
+								})
+							} else {
+								var posts = [
+									/*{
+										username: b.user,
+										title: b.title,
+										post_date: date_created(b.date_created),
+										body: escapeBody(b.body),
+										replyurl: "/reply/" + id,
+										id: b.id,
+										type: 0,
+										redir: JSON.stringify("/sf/" + b.subforum),
+										joindate: 0,
+										userid: b.user,
+										online: !!online_users[b.user]
+									}*/
+								]
+								var paths = [[b.id]]
+								var tree = {
+									id: b.id,
+									path: [b.id],
+									title: b.title,
+									body: b.body,
+									children: []
 								}
-								getall()
-								function complete(){
-									for(i in usernames){
-										posts[i].username = usernames[i]
-										posts[i].postcount = postcounts[i]
-										posts[i].joindate = joindate_label(joindates[i])
+								var level = 3;
+								/*
+									levels (threshold):
+									
+									1: tree (thread)
+									2: replies to tree
+									3+: replies to replies (done automatically)
+								*/
+								database.all("select * from threads where type = 1 and deleted=0 and parent=?", [b.id], function(e, childs){
+									for(i in childs){
+										tree.children.push({
+											id: childs[i].id,
+											children: [],
+											title: childs[i].title,
+											body: childs[i].body,
+											path: tree.path.concat(childs[i].id)
+										})
+										paths.push(tree.path.concat(childs[i].id))
+									}
+									
+									
+									function tree_data(){
+										var latest = []
+										var found = false;
+										for(i in paths){
+											var length = paths[i].length
+											if(length === level-1) {
+												latest.push(paths[i])
+												found = true
+											}
+										}
+										if(found){
+											var index = 0
+											function step(){
+												database.get("select * from threads where type=1 and deleted=0 and parent=?", [latest[index][latest[index].length-1]], function(e, chd) {
+													if(chd){
+														navigate(tree, latest[index]).children.push({
+															id: chd.id,
+															path: latest[index].concat(chd.id),
+															title: chd.title,
+															body: chd.body,
+															children: []
+														})
+														paths.push(latest[index].concat(chd.id))
+													}
+													
+													
+													index++;
+													if(index >= latest.length) {
+														level++
+														tree_data()
+													} else {
+														step()
+													}
+												})
+											}
+											step()
+										} else {
+											_cont()
+										}
+									}
+									tree_data()
+									
+								})
+								
+								function _cont(){
+									var dumped = []
+									function dmp(tr) {
+										dumped.push(tr.path)
+										for(i in tr.children){
+											dmp(tr.children[i])
+										}
+									}
+									dmp(tree)
+									for(i in dumped){
+										var d = dumped[i].length - 1
+										d *= 50
+										if(d === 0) d = 1
+										var data = navigate(tree, dumped[i])
+										posts.push({
+											indent: d,
+											title: data.title,
+											body: data.body
+										})
 									}
 									var output = tmp(Object.assign({
 										subforum_name: sf.name,
 										logged_in: userinfo.loggedin,
-										thread_title: b.title,
-										posts: posts,
-										nextThread: next_thread_id,
-										prevThread: prev_thread_id
+										thread_title: "<none>",
+										posts: 0,
+										nextThread: 0,
+										prevThread: 0,
+										displayMode: displayMode,
+										posts: posts
 									}, userinfo));
 									
 									res.write(output)
 									res.end()
 								}
-							})
+								
+							}
 						})
 					} else {
 						module.exports(req, res, swig, database, b.thread, parseCookie, userinfo, date_created, querystring, online_users)
@@ -209,8 +355,12 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 		if(!error){
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
-				
-				res.end("<html>" + JSON.stringify(data) + "<br>This feature is not yet implemented</html>")
+				if(data.displayMode == "threaded") {
+					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, 1)
+				} else {
+					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users)
+				}
+				//res.end("<html>" + JSON.stringify(data) + "<br>This feature is not yet implemented</html>")
 			});
 		}
 	}

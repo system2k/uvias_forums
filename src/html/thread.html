@@ -8,13 +8,14 @@
 		<b>Display mode:&nbsp;</b>
 		<select style="border-color:black; margin-bottom: 3px" name="displayMode" onchange="changeMode();">
 			<option value="flat">Flat (Default)</option>
-			<option value="threaded">Threaded</option>
+			<option value="threaded" {% if displayMode == 1 %}selected{% endif %}>Threaded</option>
 		</select>
 		<select style="border-color:black; margin-bottom: 3px" name="sortOrder" onchange="changeMode();">
 			<option value="oldest_to_newest">Oldest to newest</option>
 			<option value="newest_to_oldest">Newest to oldest</option>
 		</select>
 	</div>
+	{% if !displayMode %}
 	<table style="width: 100%; table-layout: auto;" border=1>
 		<tbody>
 			<tr>
@@ -80,6 +81,36 @@
 			
 		</tbody>
 	</table>
+	{% else %}
+	<br>
+	
+	{% for label in posts %}
+		<table style="width: 100%;">
+			<tbody>
+				<tr>
+					<td style="width: {{label.indent}}px">
+					
+					</td>
+					<td style="width: 1px; vertical-align: top">
+						<img src="/images/collapse.png">
+					</td>
+					<td>
+						<div style="width: 100%">
+							<div style="background-color:#4444EE; color: white; font-family: Verdana">
+								{{label.title}}
+							</div>
+							<div style="background-color:#9999FF">
+								{{label.body}}
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		</br>
+	{% endfor %}
+	
+	{% endif %}
 	<b style="font-family: Verdana; font-size: 0.6em">Page 1 of 1</b>
 {% endblock %}
 

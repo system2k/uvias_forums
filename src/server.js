@@ -25,6 +25,9 @@ module.exports = function(){
 	pre_load("img", "online", "./src/image/online.png")
 	pre_load("img", "thread", "./src/image/thread.png")
 	pre_load("img", "thread_read", "./src/image/thread_read.png")
+	pre_load("img", "subforum", "./src/image/subforum.png")
+	pre_load("img", "expand", "./src/image/expand.png")
+	pre_load("img", "collapse", "./src/image/collapse.png")
 	
 	pre_load("js", "adminpanel", "./src/javascripts/adminpanel.js")
 	
@@ -451,6 +454,21 @@ module.exports = function(){
 						"Content-Type": "image/png"
 					})
 					res.end(pre_loaded_images["thread_read"], "binary");
+				} else if(pathname == "images/expand.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["expand"], "binary");
+				} else if(pathname == "images/collapse.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["collapse"], "binary");
+				} else if(pathname == "images/subforum.png") {
+					res.writeHead(200, {
+						"Content-Type": "image/png"
+					})
+					res.end(pre_loaded_images["subforum"], "binary");
 				} else if(pathname.startsWith("sf/")){
 					page_SubForum(req, res, swig, database, pathname.substr(3), parseCookie, userinfo, querystring)
 				} else if(pathname.startsWith("thread/")) {
