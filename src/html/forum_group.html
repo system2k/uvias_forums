@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>
+		Forums >> {{forum_group.name}}
+	</h1>
+	<table class="defaultTable">
+		<tbody>
+			<tr>
+				<th class="sfhead" colspan="2">
+					Name
+				</th>
+				<th class="sfhead" style="width: 9%">
+					Threads
+				</th>
+				<th class="sfhead" style="width: 9%">
+					Posts
+				</th>
+			</tr>
+			
+			<tr>
+				<td colspan="4" style="background-image: url('/images/barGray.gif');">
+					<a style="font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText" href="/forum_group/{{forum_group.id}}">{{forum_group.name}}</a>
+				</td>
+			</tr>
+			{% for forum in forums %}
+				<tr style="height: 50px;">
+					<td style="width: 30px; background-color: #cee7ff;">
+						<img src="/images/forum.png">
+					</td>
+					<td style="background-color: #b9dcff;">
+						<a href="/sf/{{forum.id}}" class="rowText">{{forum.name}}</a>
+						<br>
+						<p class="rowText" style="font-size: 13px; color: #414141">{{forum.desc}}</p>
+					</td>
+					<td style="background-color: #cee7ff;">
+						<p class="rowText" style="text-align: center">{{forum.thread_count}}</p>
+					</td>
+					<td style="background-color: #b9dcff;">
+						<p class="rowText" style="text-align: center">{{forum.post_count}}</p>
+					</td>
+				</tr>
+			{% endfor %}
+			
+		</tbody>
+	</table>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Forum groups >> Edit forum groups >> {{forum_group.name}}
+	</h1>
+	
+	<!--
+	<table class="defaultTable">
+		<tbody id="forum_rows">
+			<tr>
+				<th>
+					Create a new forum
+				</th>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff;">
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									Name: 
+								</td>
+								<td>
+									<input style="width: 100%;" id="name">
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									Description: 
+								</td>
+								<td>
+									<textarea rows="9" cols="40" id="desc"></textarea>
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									Forum group: 
+								</td>
+								<td>
+									<select id="forum_group">
+										{% for i in forum_groups %}
+										<option>{{i}}</option>
+										{% endfor %}
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td>
+								</td>
+								<td>
+									<button type="button" style="float: right; padding: 2px 16px" onclick="create_forum()">Create</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	-->
+	
+	<div id="forum_group_id" style="display: none;">{{forum_group.id}}</div>
+	
+	<table class="defaultTable">
+		<tbody>
+			<tr>
+				<th>
+					Edit forum group
+				</th>
+			</tr>
+			<tr>
+				<td colspan="4" style="background-image: url('/images/barGray.gif');">
+					<a style="font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText" href="/forum_group/{{forum_group.id}}">{{forum_group.name}}</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff; vertical-align: top;">
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right">
+									<b>ID:</b>&nbsp;
+								</td>
+								<td>
+									{{forum_group.id}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Name:</b>&nbsp;
+								</td>
+								<td>
+									<input value="{{forum_group.name}}" style="width: 256px;" id="name">
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Date created:</b>&nbsp;
+								</td>
+								<td>
+									{{forum_group.date_created}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Order:</b>&nbsp;
+								</td>
+								<td>
+									{{forum_group._order}}
+								</td>
+							</tr>
+							<tr>
+								<td>
+								</td>
+								<td>
+									<button type="button" style="padding: 2px 16px; float: right;" onclick="upd_forum_group()">Update</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}

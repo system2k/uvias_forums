@@ -1,12 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<h1 style="word-break: break-all;">
-		Profile >> {{username}}
-	</h1>
-	Post count: {{posts}}
-	<br>
-	Join date: {{joindate}}
-	<br>
-	Rank: {{rank}}
+	<table class="defaultTable">
+		<tbody>
+			<tr>
+				<th>
+					Profile: {{username}}
+				</th>
+			</tr>
+			<tr>
+				<td style="background-image: url('/images/barGray.gif');">
+					Information
+				</td>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff;">
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right;">
+									Join date:
+								</td>
+								<td>
+									{{joindate}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right;">
+									Last login:
+								</td>
+								<td>
+									{{last_login}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right;">
+									Post count:
+								</td>
+								<td>
+									{{posts}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right;">
+									Type:
+								</td>
+								<td>
+									{% if rank == 0 %}
+									User
+									{% elseif rank == 1 %}
+									Moderator
+									{% elseif rank == 2 %}
+									Administrator
+									{% else %}
+									Unknown
+									{% endif %}
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
 {% endblock %}

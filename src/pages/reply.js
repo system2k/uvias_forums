@@ -1,5 +1,5 @@
-module.exports = function(req, res, database, id, parseCookie, swig, querystring, userinfo){
-	if(userinfo.loggedin == false){
+module.exports = function(req, res, id, userinfo){
+	if(userinfo.logged_in == false){
 		res.end("You need to be logged in")
 		return
 	}
@@ -26,25 +26,28 @@ module.exports = function(req, res, database, id, parseCookie, swig, querystring
 					res.write("Forum not found")
 					res.end()
 				} else {
-					var data = {
-						forum_name: b.name,
-						logged_in: userinfo.loggedin,
-						thread_title: thread.title,
-						reply_title: "",
-						cancel_url: "/thread/" + thread.thread
-					}
-					data.reply_title = thread.title
-					if(!(data.reply_title.startsWith("RE: "))) {
-						data.reply_title = "RE: " + data.reply_title
-					}
-					var output = tmp(Object.assign(data, userinfo));
-					res.write(output)
-					res.end()
+					database.get("select * from forum_groups where id=?", b.forum_group, function(e, f_g){
+						var data = {
+							forum_name: b.name,
+							logged_in: userinfo.logged_in,
+							thread_title: thread.title,
+							reply_title: "",
+							cancel_url: "/thread/" + thread.thread,
+							f_g: f_g
+						}
+						data.reply_title = thread.title
+						if(!(data.reply_title.startsWith("RE: "))) {
+							data.reply_title = "RE: " + data.reply_title
+						}
+						var output = tmp(Object.assign(data, userinfo));
+						res.write(output)
+						res.end()
+					})
 				}
 			})
 		}
 		if(method == "post") {
-			if(userinfo.loggedin){
+			if(userinfo.logged_in){
 				var queryData = "";
 				var error = false;
 				req.on('data', function(data) {

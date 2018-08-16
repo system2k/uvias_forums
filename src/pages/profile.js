@@ -1,4 +1,4 @@
-module.exports = function(req, res, swig, database, id, date_created, userinfo) {
+module.exports = function(req, res, id, userinfo) {
 	var method = req.method.toLowerCase()
 	
 	if(method == "get"){
@@ -13,7 +13,8 @@ module.exports = function(req, res, swig, database, id, date_created, userinfo) 
 					posts: b.posts,
 					joindate: date_created(b.date_joined),
 					rank: b.rank,
-					logged_in: userinfo.loggedin
+					last_login: date_created(b.last_login),
+					user: b
 				}, userinfo));
 				
 				res.write(output)

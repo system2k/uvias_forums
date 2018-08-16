@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Forums >> Create forum group
+	</h1>
+	
+	<table class="defaultTable">
+		<tbody id="forum_rows">
+			<tr>
+				<th>
+					Create a new forum group
+				</th>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff;">
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									Name: 
+								</td>
+								<td>
+									<input style="width: 256px;" id="name">
+								</td>
+							</tr>
+							<tr>
+								<td>
+								</td>
+								<td>
+									<button type="button" style="float: right; padding: 2px 16px" onclick="create_forum_group()">Create</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}

@@ -1,4 +1,4 @@
-module.exports = function(req, res, swig, userinfo, database, date_created, querystring, cache_data){
+module.exports = function(req, res, userinfo){
 	var tmp = swig.compileFile("./src/html/admin_editforums.html")
 	
 	var forum_groups = []
@@ -43,7 +43,6 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 				})
 			}*/
 			var output = tmp(Object.assign({
-				logged_in: userinfo.loggedin,
 				/*forums: forums,
 				forum_count: forums.length*/
 				forum_groups: forum_groups

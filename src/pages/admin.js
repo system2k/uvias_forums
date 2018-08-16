@@ -1,4 +1,4 @@
-module.exports = function(req, res, swig, userinfo, database, date_created, querystring, cache_data){
+module.exports = function(req, res, userinfo){
 	var method = req.method.toLowerCase()
 	
 	if(method == "get"){
@@ -18,7 +18,6 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 				})
 			}
 			var output = tmp(Object.assign({
-				logged_in: userinfo.loggedin,
 				forums: forums,
 				forum_count: forums.length
 			}, userinfo));
@@ -98,19 +97,48 @@ module.exports = function(req, res, swig, userinfo, database, date_created, quer
 						var desc = args.desc
 						var forum_group = args.forum_group
 						
-						database.get("select * from forum_groups where name=?", [forum_group], function(a, f_g){
-							if(!f_g) {
-								res.end()
-							} else {
-								var forum_group_id = f_g.id
-								
-								database.run("insert into forums values(null, ?, ?, ?, ?, ?, (SELECT (CASE WHEN EXISTS(SELECT id from forums limit 1) THEN (select _order from forums order by _order desc limit 1) ELSE 0 END)+1 as ord), ?)", [name, desc, Date.now(), 0, 0, forum_group_id], function(a,b){
+						database.run("insert into forums values(null, ?, ?, ?, ?, ?, (SELECT (CASE WHEN EXISTS(SELECT id from forums where forum_group=? limit 1) THEN (select _order from forums where forum_group=? order by _order desc limit 1) ELSE 0 END)+1 as ord), ?, 0)", [name, desc, Date.now(), 0, 0, forum_group, forum_group, forum_group], function(a,b){
+							res.writeHead(302, {
+								"Location": "/"
+							})
+							res.end()
+						})
+						
+					} else if(data.command == "update_forum_group") {
+						var name = args.name
+						var id = args.id
+						database.get("select * from forum_groups where id=?", id, function(e,f_g){
+							if(f_g){
+								database.run("update forum_groups set name=? where id=?", [name, id], function(){
 									res.writeHead(302, {
-										"Location": "/"
+										"Location": req.headers.referer
 									})
 									res.end()
 								})
+							} else {
+								res.end("")
 							}
+						})
+						
+					} else if(data.command == "create_forum_group") {
+						var name = args.name
+						database.run("insert into forum_groups values(null, ?, ?, (select _order+1 from forum_groups order by _order desc limit 1), 0)", [name, Date.now()], function(){
+							res.writeHead(302, {
+								"Location": "/"
+							})
+							res.end()
+						})
+						
+					} else if(data.command == "update_forum") {
+						var name = args.name
+						var desc = args.desc
+						var id = args.id
+						var forum_group = args.forum_group
+						database.run("update forums set name=?, desc=?, forum_group=?, _order=(SELECT (CASE WHEN EXISTS(SELECT id from forums where forum_group=? limit 1) THEN (select _order from forums where forum_group=? order by _order desc limit 1) ELSE 0 END)+1 as ord) where id=?", [name, desc, forum_group, forum_group, forum_group, id], function(){
+							res.writeHead(302, {
+								"Location": "/admin/editforums"
+							})
+							res.end()
 						})
 					
 					} else {

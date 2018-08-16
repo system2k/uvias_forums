@@ -140,3 +140,22 @@ function create_forum(){
 		forum_group: document.getElementById("forum_group").value
 	}, "/admin")
 }
+function upd_forum_group(){
+	FormSubmit("update_forum_group", {
+		name: document.getElementById("name").value,
+		id: document.getElementById("forum_group_id").innerText
+	}, "/admin")
+}
+function create_forum_group(){
+	FormSubmit("create_forum_group", {
+		name: document.getElementById("name").value
+	}, "/admin")
+}
+function upd_forum(){
+	FormSubmit("update_forum", {
+		name: document.getElementById("name").value,
+		desc: document.getElementById("desc").value,
+		id: document.getElementById("forum_id").innerText,
+		forum_group: document.getElementById("forum_group").value
+	}, "/admin")
+}

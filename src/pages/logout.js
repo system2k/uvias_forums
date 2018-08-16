@@ -1,4 +1,4 @@
-module.exports = function(req, res, database, cookieExpireDate, parseCookie) {
+module.exports = function(req, res) {
 	var cookie = req.headers.cookie
     cookie = parseCookie(cookie)
 	
@@ -7,7 +7,7 @@ module.exports = function(req, res, database, cookieExpireDate, parseCookie) {
 	database.get("delete from session where key = ?", [sid], function(a, b){
 		res.writeHead(302, {
 			"Set-Cookie": "sessionid=; expires=" + cookieExpireDate(0) + ";",
-			"Location": "/"
+			"Location": req.headers.referer
 		})
 		res.end()
 	})

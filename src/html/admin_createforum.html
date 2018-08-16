@@ -40,7 +40,7 @@
 								<td>
 									<select id="forum_group">
 										{% for i in forum_groups %}
-										<option>{{i}}</option>
+										<option value="{{i.id}}">{{i.name}}</option>
 										{% endfor %}
 									</select>
 								</td>

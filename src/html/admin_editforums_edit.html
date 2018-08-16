@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<script src="/scripts/adminpanel.js"></script>
+	<h1>
+		Admin Panel >> Forums >> Edit forums >> {{forum_group.name}} >> {{forum.name}}
+	</h1>
+	<div id="forum_group_id" style="display: none;">{{forum_group.id}}</div>
+	
+	<div id="forum_id" style="display: none;">{{forum.id}}</div>
+	
+	<table class="defaultTable">
+		<tbody>
+			<tr>
+				<th>
+					Edit forum
+				</th>
+			</tr>
+			<tr>
+				<td style="background-color: #cee7ff; vertical-align: top;">
+					<table style="border-spacing: 8px; border-collapse: separate;">
+						<tbody>
+							<tr>
+								<td style="text-align: right">
+									<b>ID:</b>&nbsp;
+								</td>
+								<td>
+									{{forum.id}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Name:</b>&nbsp;
+								</td>
+								<td>
+									<input value="{{forum.name}}" style="width: 256px;" id="name">
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; vertical-align: top;">
+									<b>Description:</b>&nbsp;
+								</td>
+								<td>
+									<textarea rows="9" cols="40" id="desc">{{forum.desc}}</textarea>
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Date created:</b>&nbsp;
+								</td>
+								<td>
+									{{forum.date_created}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Thread count:</b>&nbsp;
+								</td>
+								<td>
+									{{forum.thread_count}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Post count:</b>&nbsp;
+								</td>
+								<td>
+									{{forum.post_count}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Order:</b>&nbsp;
+								</td>
+								<td>
+									{{forum._order}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right">
+									<b>Forum group:</b>&nbsp;
+								</td>
+								<td>
+									<select id="forum_group">
+										{% for i in forum_groups %}
+										<option value="{{i.id}}"{% if i.id == forum_group.id %} selected{% endif %}>{{i.name}}</option>
+										{% endfor %}
+									</select>
+								</td>
+							</tr>
+							
+							
+							<tr>
+								<td>
+								</td>
+								<td>
+									<button type="button" style="padding: 2px 16px; float: right;" onclick="upd_forum()">Update</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}

@@ -21,7 +21,7 @@
 			{% for label in forum_groups %}
 				<tr>
 					<td colspan="4" style="background-image: url('/images/barGray.gif');">
-						<a style="font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText" href="/forum_group/1">{{label.name}}</a>
+						<a style="font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText" href="/forum_group/{{label.id}}">{{label.name}}</a>
 					</td>
 				</tr>
 				{% for forum in label.forums %}
@@ -30,7 +30,7 @@
 							<img src="/images/forum.png">
 						</td>
 						<td style="background-color: #b9dcff;">
-							<a href="/sf/{{label.id}}" class="rowText">{{forum.name}}</a>
+							<a href="/sf/{{forum.id}}" class="rowText">{{forum.name}}</a>
 							<br>
 							<p class="rowText" style="font-size: 13px; color: #414141">{{forum.desc}}</p>
 						</td>

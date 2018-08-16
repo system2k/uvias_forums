@@ -98,7 +98,7 @@
 							{{forum.id}}
 						</td>
 						<td>
-							<button style="padding: 2px 17px;" type="button">Enter</button>&nbsp;<a href="/admin/edit/1">{{forum.name}}</a>
+							<button style="padding: 2px 17px;" type="button" onclick="window.location.pathname='/admin/editforums/{{forum.id}}'">Enter</button>&nbsp;<a href="/admin/editforums/{{forum.id}}">{{forum.name}}</a>
 						</td>
 					</tr>
 				{% endfor %}

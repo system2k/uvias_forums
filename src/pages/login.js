@@ -18,7 +18,7 @@ var Month = 2628002880
 var Year = 31536034560
 var Decade = 315360345600
 
-module.exports = function(req, res, database, querystring, checkHash, cookieExpireDate) {
+module.exports = function(req, res) {
 	var method = req.method.toLowerCase()
 	
 	if(method == "post") {
@@ -46,12 +46,14 @@ module.exports = function(req, res, database, querystring, checkHash, cookieExpi
 						if(checkHash(chkpass, pass)){
 							var tkn = token(32)
 							var expires = Date.now() + Month*2
-							database.run("insert into session values(?, ?, ?)", [b.id, expires, tkn], function(a,b) {
-								res.writeHead(302, {
-									"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
-									"Location": "/"
+							database.run("insert into session values(?, ?, ?)", [b.id, expires, tkn], function() {
+								database.run("update users set last_login=? where id=?", [Date.now(), b.id], function(){
+									res.writeHead(302, {
+										"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
+										"Location": "/"
+									})
+									res.end()
 								})
-								res.end()
 							})
 						} else {
 							res.end("User does not exist or password is wrong")

@@ -1,4 +1,4 @@
-module.exports = function(req, res, swig, database, parseCookie, userinfo) {
+module.exports = function(req, res, userinfo) {
 	var tmp = swig.compileFile("./src/html/main.html")
 	
 	var forum_groups = []
@@ -38,8 +38,7 @@ module.exports = function(req, res, swig, database, parseCookie, userinfo) {
 			}*/
 			var output = tmp(Object.assign({
 				//forums: forums,
-				forum_groups: forum_groups,
-				logged_in: userinfo.loggedin
+				forum_groups: forum_groups
 			}, userinfo));
 			
 			res.write(output)
