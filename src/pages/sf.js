@@ -77,7 +77,11 @@ module.exports = function(req, res, id, userinfo) {
 									postedby: "",
 									userid: b[i].user,
 									views: b[i].views,
-									read: false
+									read: false,
+									mini_page_bar: false,
+									mini_page_bar_pages: [],
+									total_pages: 1,
+									replies: 0
 								})
 							}
 							var usernames = [];
@@ -88,8 +92,37 @@ module.exports = function(req, res, id, userinfo) {
 									var viewed = false;
 									if(userinfo.logged_in){
 										database.get("select * from views where user=? and type=0 and post_id=?", [userinfo.user_id, threads[indx].id], function(a, v){
-											viewed = v
-											cont()
+											database.get("select count(*) as cnt from threads where thread=?", threads[indx].id, function(e, totalPosts){
+												var totalPages = Math.ceil(totalPosts.cnt/postsPerPage)
+												threads[indx].total_pages = totalPages
+												threads[indx].replies = (totalPosts.cnt-1)
+												if(totalPages > 1) {
+													threads[indx].mini_page_bar = true
+													
+													
+													var pages = []
+
+													if(totalPages <= 5) {
+														for(var i = 1; i <= totalPages; i++){
+															pages.push(i)
+														}
+													} else {
+														pages.push(1,2,3)
+														var total = totalPages - 5;
+														if(total > 3) total = 3
+														pages.push("...")
+														for(var i = 0; i < total; i++){
+															pages.push((totalPages-total+1)+i)
+														}
+													}
+
+													threads[indx].mini_page_bar_pages = pages;
+											
+											
+												}
+												viewed = v
+												cont()
+											})
 										})
 									} else {
 										cont()

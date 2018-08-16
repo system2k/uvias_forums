@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>
+		My forums
+	</h1>
+	<h1>
+		Threads you are tracking:
+	</h1>
+	{% if tracking_total != 0 %}
+	<table class="defaultTable">
+		<tbody>
+			<tr>
+				<th class="sfhead" colspan="2">
+					Threads
+				</th>
+				<th class="sfhead" style="width: 200px;">
+					Posted by
+				</th>
+				<th class="sfhead" style="width: 100px;">
+					Replies
+				</th>
+				<th class="sfhead" style="width: 100px;">
+					Views
+				</th>
+			</tr>
+			{% for label in tracked_threads %}
+			<tr style="height: 30px;">
+				{% if !label.read %}
+				<td style="width: 30px; background-color: #cee7ff;">
+					<img src="/images/thread.png">
+				</td>
+				{% else %}
+				<td style="width: 30px; background-color: #cee7ff;">
+					<img src="/images/thread_read.png">
+				</td>
+				{% endif %}
+				<td style="background-color: #b9dcff; word-break: break-all;">
+					<a href="/thread/{{label.id}}" class="rowText">{{label.title}}</a>
+					{% if label.mini_page_bar %}
+						<span style="font-size: 10px;">(Pages:&nbsp;
+						{% for i in label.mini_page_bar_pages %}
+							{% if i != "..." %}
+								<a href="/thread/{{label.id}}/{{i}}">{{i}}</a>
+							{% else %}
+								{{i}}
+							{% endif %}
+						{% endfor %}
+						)</span>
+					{% endif %}
+				</td>
+				<td style="background-color: #cee7ff; word-break: break-all;">
+					<a href="/profile/{{label.user}}" class="rowText">{{label.postedby}}</a>
+				</td>
+				<td style="background-color: #b9dcff; word-break: break-all; text-align: center">
+					<span class="rowText">{{label.replies}}</span>
+				</td>
+				<td style="background-color: #cee7ff; word-break: break-all; text-align: center">
+					<span class="rowText">{{label.views}}</span>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+		<p>You are not tracking any threads.</p>
+	{% endif %}
+{% endblock %}

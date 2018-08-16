@@ -9,7 +9,63 @@ function beginServer(){
 	crypto = require('crypto');
 	
 	var port = 80
+	postsPerPage = 30; // posts per page on threads
 	database = new sql.Database("../database.db")
+	//database = {}
+	
+	//var sql_cmds = ["close", "configure", "run", "get", "all", "each", "exec", "prepare"]
+	
+	/*database = { // prevent crashes
+		get: function(){
+			for(i in arguments){
+				var fc = arguments[i]
+				if(typeof fc === "function") {
+					var pargs = arguments[i]
+					arguments[i] = function(){
+						try{pargs(...arguments)}catch(e){}
+					}
+				}
+			}
+			db.get(...arguments)
+		},
+		all: function(){
+			for(i in arguments){
+				var fc = arguments[i]
+				if(typeof fc === "function") {
+					var pargs = arguments[i]
+					arguments[i] = function(){
+						try{pargs(...arguments)}catch(e){}
+					}
+				}
+			}
+			db.all(...arguments)
+		},
+		each: function(){
+			for(i in arguments){
+				var fc = arguments[i]
+				if(typeof fc === "function") {
+					var pargs = arguments[i]
+					arguments[i] = function(){
+						try{pargs(...arguments)}catch(e){}
+					}
+				}
+			}
+			db.each(...arguments)
+		},
+		run: function(){
+			for(i in arguments){
+				var fc = arguments[i]
+				if(typeof fc === "function") {
+					var pargs = arguments[i]
+					arguments[i] = function(){
+						try{pargs(...arguments)}catch(e){}
+					}
+				}
+			}
+			db.run(...arguments)
+		}
+	}*/
+	
 	var pre_loaded_images = {};
 	var pre_loaded_content = {};
 	function pre_load(type, name, path) {
@@ -49,7 +105,9 @@ function beginServer(){
 		page_admin_createforumgroup: "./pages/admin_createforumgroup.js",
 		page_admin_editforums_edit: "./pages/admin_editforums_edit.js",
 		page_profile: "./pages/profile.js",
-		page_forum_group: "./pages/forum_group.js"
+		page_forum_group: "./pages/forum_group.js",
+		page_myforums: "./pages/myforums.js",
+		page_members: "./pages/members.js"
 	}
 	
 	for(i in pages){
@@ -322,12 +380,18 @@ function beginServer(){
 				}
 				
 				function db_forum_group_main(){
-				database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?, 0)", ["Main forums", Date.now(), 1], function(e){
-					console.log("Created 'Main forums' forum group")
-					log("Table creation complete.", "l_green")
-					begin()
-				})
-			}
+					database.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?, 0)", ["Main forums", Date.now(), 1], function(e){
+						console.log("Created 'Main forums' forum group")
+						db_tracking()
+					})
+				}
+				function db_tracking(){
+					database.run("create table tracking(user integer, thread integer, date integer)", function(){
+						console.log("Created 'tracking'")
+						log("Table creation complete.", "l_green")
+						begin()
+					})
+				}
 			}
 		} else {
 			begin();
@@ -526,7 +590,7 @@ function beginServer(){
 					})
 					res.end(pre_loaded_images[Images[pathname][1]], "binary");
 					
-				} else if(pathname == "") {////////////////////////
+				} else if(pathname == "") {
 					page_main(req, res, userinfo)
 					
 				} else if(pathname == "scripts/adminpanel.js") {
@@ -543,30 +607,36 @@ function beginServer(){
 						res.end(pre_loaded_content["adminpanel"], "binary");
 					}
 					
-				} else if(pathname.startsWith("sf/")){//////////////////////
+				} else if(pathname.startsWith("sf/")){
 					page_Forum(req, res, pathname.substr("sf/".length), userinfo)
 					
-				} else if(pathname.startsWith("thread/")) {///////////////////
+				} else if(pathname.startsWith("thread/")) {
 					page_thread(req, res, pathname.substr("thread/".length), userinfo)
 					
-				} else if(pathname == "register") {///////////////////////
+				} else if(pathname == "register") {
 					page_register(req, res, userinfo)
 					
-				} else if(pathname.startsWith("post/")) {/////////////////////
+				} else if(pathname.startsWith("post/")) {
 					page_post(req, res, pathname.substr("post/".length), userinfo)
 					
-				} else if(pathname == "login"){////////////
+				} else if(pathname == "login"){
 					page_login(req, res)
 					
-				} else if(pathname == "logout"){//////////////////////////
+				} else if(pathname == "logout"){
 					page_logout(req, res)
 					
-				} else if(pathname.startsWith("reply/")){////////////////////////////
+				} else if(pathname.startsWith("reply/")){
 					page_reply(req, res, pathname.substr("reply/".length), userinfo)
 					
-				} else if(pathname.startsWith("forum_group/")) {/////////////////////
+				} else if(pathname.startsWith("forum_group/")) {
 					var id = pathname.substr("forum_group/".length)
 					page_forum_group(req, res, userinfo, id)
+					
+				} else if(pathname.startsWith("myforums")) {
+					page_myforums(req, res, userinfo)
+					
+				} else if(pathname == "members") {
+					page_members(req, res, userinfo)
 					
 				} else if(pathname.startsWith("admin")) {
 					pathname = pathname.substr(5)

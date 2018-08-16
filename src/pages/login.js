@@ -21,6 +21,17 @@ var Decade = 315360345600
 module.exports = function(req, res) {
 	var method = req.method.toLowerCase()
 	
+	if(method == "get") {
+		var tmp = swig.compileFile("./src/html/login.html")
+		
+		var output = tmp(Object.assign({
+			
+		}, {}));
+		
+		res.write(output)
+		res.end()
+	}
+	
 	if(method == "post") {
 		var queryData = "";
 		var error = false;
