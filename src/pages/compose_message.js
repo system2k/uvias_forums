@@ -1,4 +1,4 @@
-module.exports = function(req, res, userinfo, id){
+module.exports = async function(req, res, userinfo, id){
 	if(userinfo.logged_in) {
 		var method = req.method.toLowerCase()
 		
@@ -7,14 +7,13 @@ module.exports = function(req, res, userinfo, id){
 			
 			var to_user;
 			
-			database.get("select * from users where id=?", id, function(e, user){
-				if(user) {
-					to_user = user
-					done()
-				} else {
-					res.end()
-				}
-			})
+			var user = await get("select * from users where id=?", id)
+			if(user) {
+				to_user = user
+				done()
+			} else {
+				res.end()
+			}
 			
 			function done(){
 				var output = tmp(Object.assign({
@@ -25,11 +24,6 @@ module.exports = function(req, res, userinfo, id){
 				res.end()
 			}
 		} else if(method === "post") {
-			
-			
-			
-			
-			
 			var queryData = "";
 			req.on('data', function(data) {
 				queryData += data;
@@ -39,7 +33,7 @@ module.exports = function(req, res, userinfo, id){
 					req.connection.destroy();
 				}
 			});
-			req.on('end', function(){
+			req.on('end', async function(){
 				var data = querystring.parse(queryData)
 				if(data.command == "send_message") {
 					var args = querystring.parse(decodeURIComponent(data.arguments))
@@ -47,31 +41,23 @@ module.exports = function(req, res, userinfo, id){
 					var subject = args.subject
 					var body = args.body
 					
-					database.get("select * from users where id=?", id, function(e, user){
-						if(user) {
-							database.run("insert into messages values(null, ?, ?, ?, ?, ?)", [Date.now(), userinfo.user_id, id, subject, body], function(){
-								res.writeHead(302, {
-									"Location": "/profile/" + id
-								})
-								res.end()
-							})
-						} else {
-							res.end()
-						}
-					})
+					var user = await get("select * from users where id=?", id)
+					if(user) {
+						await run("insert into messages values(null, ?, ?, ?, ?, ?)", [Date.now(), userinfo.user_id, id, subject, body])
+						res.writeHead(302, {
+							"Location": "/profile/" + id
+						})
+						res.end()
+					} else {
+						res.end()
+					}
 				} else {
 					res.end("Invalid command")
 				}
 			});
-			
-			
-			
-			
 		} else {
 			res.end()
 		}
-		
-		
 	} else {
 		res.end()
 	}

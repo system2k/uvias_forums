@@ -52,4 +52,21 @@
 			{% endfor %}
 		</tbody>
 	</table>
+	<br>
+	<br>
+	<div style="float: right;">
+		<span style="font-size: 20px;">Find users: </span>
+		<input value="{{last_search}}" id="search_input"></input>
+		<button type="button" style="padding: 1px 8px;" onclick="searchUser()">Find</button>
+	</div>
+{% endblock %}
+
+{% block scriptcontent %}
+	<script>
+		function searchUser() {
+			FormSubmit("search", {
+				search: search_input.value
+			}, window.location.pathname)
+		}
+	</script>
 {% endblock %}

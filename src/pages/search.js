@@ -8,17 +8,16 @@ module.exports = function(req, res, userinfo, found, prev_str){
 		
 		if(found) {
 			var indx = 0
-			function step(){
-				database.get("select * from users where id=?", found[indx].user, function(e, user){
-					found[indx].username = user.username
-					
-					indx++
-					if(indx >= found.length) {
-						done()
-					} else {
-						step()
-					}
-				})
+			async function step(){
+				var user = await get("select * from users where id=?", found[indx].user)
+				found[indx].username = user.username
+				
+				indx++
+				if(indx >= found.length) {
+					done()
+				} else {
+					step()
+				}
 			}
 			if(found.length > 0) {
 				step()
@@ -48,7 +47,7 @@ module.exports = function(req, res, userinfo, found, prev_str){
                 req.connection.destroy();
             }
         });
-		req.on('end', function(){
+		req.on('end', async function(){
 			var data = querystring.parse(queryData)
 			if(data.command == "search"){
 				var args = querystring.parse(decodeURIComponent(data.arguments))
@@ -60,7 +59,8 @@ module.exports = function(req, res, userinfo, found, prev_str){
 					var results = []
 					var idx = 1;
 					var alt = 0
-					database.each("select * from threads", function(e, data){
+					
+					await each("select * from threads", function(e, data) {
 						var _title = data.title.toUpperCase()
 						var _body = data.body.toUpperCase()
 						
@@ -88,10 +88,9 @@ module.exports = function(req, res, userinfo, found, prev_str){
 							}
 							results.push(data)
 						}
-						
-					}, function(e, t){
-						module.exports({method: "GET"}, res, userinfo, results, args.search)
 					})
+					
+					module.exports({method: "GET"}, res, userinfo, results, args.search)
 				} else {
 					res.end()
 				}

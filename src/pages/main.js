@@ -1,48 +1,37 @@
-module.exports = function(req, res, userinfo) {
+module.exports = async function(req, res, userinfo) {
 	var tmp = swig.compileFile("./src/html/main.html")
 	
 	var forum_groups = []
 	
-	database.all("select * from forum_groups order by _order", function(e, f_g){
-		var indx = 0
-		function step(){
-			database.all("select * from forums where forum_group = ? order by _order", [f_g[indx].id], function(er, forums){
-				forum_groups.push({
-					id: f_g[indx].id,
-					name: f_g[indx].name,
-					forums: forums
-				})
-				
-				indx++
-				if(indx >= f_g.length) {
-					done()
-				} else {
-					step()
-				}
-			})
-		}
-		if(f_g.length > 0){
-			step()
-		} else {
-			done()
-		}
-	})
-	
-	
-	
-	//var forums = [];
-	function done(){
-		database.all("select * from forums order by _order", function(a, b){
-			/*for(i in b){
-				forums.push(b[i])
-			}*/
-			var output = tmp(Object.assign({
-				//forums: forums,
-				forum_groups: forum_groups
-			}, userinfo));
-			
-			res.write(output)
-			res.end()
+	var f_g = await all("select * from forum_groups order by _order")
+	var indx = 0
+	async function step(){
+		var forums = await all("select * from forums where forum_group = ? order by _order", f_g[indx].id)
+		forum_groups.push({
+			id: f_g[indx].id,
+			name: f_g[indx].name,
+			forums: forums
 		})
+		
+		indx++
+		if(indx >= f_g.length) {
+			done()
+		} else {
+			step()
+		}
+	}
+	if(f_g.length > 0){
+		step()
+	} else {
+		done()
+	}
+	
+	async function done(){
+		var output = tmp(Object.assign({
+			forum_groups: forum_groups
+		}, userinfo));
+		
+		res.write(output)
+		res.end()
 	}
 }

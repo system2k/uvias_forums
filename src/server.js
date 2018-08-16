@@ -1,23 +1,22 @@
-console.log("Starting server...");
-
 var http = require("http")
 url = require("url")
 var fs = require("fs")
 var sql = require("sqlite3").verbose()
 swig = require("swig")
 querystring = require("querystring")
-crypto = require('crypto');
+crypto = require("crypto")
 
 var port = 80
 postsPerPage = 30; // posts per page on threads
 database = new sql.Database("../database.db")
+console.log("Starting server...");
 
 get = async function(command, params) {
 	if(!params) params = []
 	return new Promise(function(r) {
 		database.get(command, params, function(err, res) {
 			if(err) {
-				return r(false)
+				return rej(false)
 			}
 			r(res)
 		})
@@ -32,7 +31,10 @@ run = async function(command, params) {
 			if(err) {
 				return rej(err)
 			}
-			r(true)
+			var info = {
+				lastID: this.lastID
+			}
+			r(info)
 		})
 	})
 }
@@ -54,9 +56,18 @@ each = async function(command, params, callbacks) {
 		callbacks = params
 		params = []
 	}
+	var def = callbacks
+	var callback_error = false
+	callbacks = function() {
+		try {
+			def(...arguments)
+		} catch(e) {
+			callback_error = true
+		}
+	}
 	return new Promise(function(r, rej) {
 		database.each(command, params, callbacks, function(err, res) {
-			if(err) {
+			if(err || callback_error) {
 				return rej(err)
 			}
 			r(res)
@@ -488,9 +499,27 @@ var Images = {
 	"images/collapse.png": ["image/png", "collapse"],
 	"images/forum.png": ["image/png", "forum"]
 }
-
+function InternalServerError(res) {
+	res.statusCode = 500;
+	res.end("(500) Internal server error")
+}
 function server_(req, res) {
-	(async function(){
+	$ = function(fc) {
+		var args = []
+		for(var i = 1; i < arguments.length; i++) {
+			args.push(arguments[i])
+		}
+		var exec = fc(...args)
+		if(exec) {
+			if(exec.catch) {
+				exec.catch(function(e) {
+					InternalServerError(res)
+				})
+			}
+		}
+	}
+	
+	serve = async function() {
 		var path = url.parse(req.url)
 		
 		var cookie = req.headers.cookie
@@ -533,9 +562,9 @@ function server_(req, res) {
 				var message_count = msgs.cnt
 				var not_read = message_count - count
 				userinfo.inbox_unread = not_read
-				nxt()
+				$(nxt)
 			} else {
-				nxt()
+				$(nxt)
 			}
 			async function nxt(){
 				var b = await get("select rank from users where id=?", user_id)
@@ -564,7 +593,7 @@ function server_(req, res) {
 				res.end(pre_loaded_images[Images[pathname][1]], "binary");
 				
 			} else if(pathname == "") {
-				page_main(req, res, userinfo)
+				$(page_main, req, res, userinfo)
 				
 			} else if(pathname == "scripts/adminpanel.js") {
 				if(userinfo.top_rank === false){
@@ -581,49 +610,49 @@ function server_(req, res) {
 				}
 				
 			} else if(pathname.startsWith("sf/")){
-				page_Forum(req, res, pathname.substr("sf/".length), userinfo)
+				$(page_Forum, req, res, pathname.substr("sf/".length), userinfo)
 				
 			} else if(pathname.startsWith("thread/")) {
-				page_thread(req, res, pathname.substr("thread/".length), userinfo)
+				$(page_thread, req, res, pathname.substr("thread/".length), userinfo)
 				
 			} else if(pathname == "register") {
-				page_register(req, res, userinfo)
+				$(page_register, req, res, userinfo)
 				
 			} else if(pathname.startsWith("post/")) {
-				page_post(req, res, pathname.substr("post/".length), userinfo)
+				$(page_post, req, res, pathname.substr("post/".length), userinfo)
 				
 			} else if(pathname == "login"){
-				page_login(req, res, userinfo)
+				$(page_login, req, res, userinfo)
 				
 			} else if(pathname == "logout"){
-				page_logout(req, res)
+				$(page_logout, req, res)
 				
 			} else if(pathname.startsWith("reply/")){
-				page_reply(req, res, pathname.substr("reply/".length), userinfo)
+				$(page_reply, req, res, pathname.substr("reply/".length), userinfo)
 				
 			} else if(pathname.startsWith("forum_group/")) {
 				var id = pathname.substr("forum_group/".length)
-				page_forum_group(req, res, userinfo, id)
+				$(page_forum_group, req, res, userinfo, id)
 				
 			} else if(pathname.startsWith("myforums")) {
-				page_myforums(req, res, userinfo)
+				$(page_myforums, req, res, userinfo)
 				
 			} else if(pathname == "members") {
-				page_members(req, res, userinfo)
+				$(page_members, req, res, userinfo)
 				
 			} else if(pathname == "search") {
-				page_search(req, res, userinfo)
+				$(page_search, req, res, userinfo)
 				
 			} else if(pathname == "inbox") {
-				page_inbox(req, res, userinfo)
+				$(page_inbox, req, res, userinfo)
 				
 			} else if(pathname.startsWith("compose_message/")) {
 				var id = pathname.substr("compose_message/".length)
-				page_compose_message(req, res, userinfo, id)
+				$(page_compose_message, req, res, userinfo, id)
 				
 			} else if(pathname.startsWith("view_message/")) {
 				var id = pathname.substr("view_message/".length)
-				page_view_message(req, res, userinfo, id)
+				$(page_view_message, req, res, userinfo, id)
 				
 			} else if(pathname.startsWith("admin")) {
 				pathname = pathname.substr(5)
@@ -637,19 +666,19 @@ function server_(req, res) {
 					if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
 					
 					if(pathname == ""){
-						page_admin(req, res, userinfo)
+						$(page_admin, req, res, userinfo)
 						
 					} else if(pathname == "editannouncement") {
-						page_admin_editannouncement(req, res, userinfo)
+						$(page_admin_editannouncement, req, res, userinfo)
 						
 					} else if(pathname.startsWith("editforums")) {
 						pathname = pathname.substr("editforums".length)
 						if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
 					
 						if(pathname == "") {
-							page_admin_editforums(req, res, userinfo)
+							$(page_admin_editforums, req, res, userinfo)
 						} else if(checkPosNumber(pathname)) {
-							page_admin_editforums_edit(req, res, userinfo, pathname)
+							$(page_admin_editforums_edit, req, res, userinfo, pathname)
 						} else {
 							res.end("")
 						}
@@ -659,18 +688,18 @@ function server_(req, res) {
 						pathname = pathname.substr("editforumgroups".length)
 						if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
 						if(pathname == "") {
-							page_admin_editforumgroups(req, res, userinfo)
+							$(page_admin_editforumgroups, req, res, userinfo)
 						} else if(checkPosNumber(pathname)) {
-							page_admin_editforumgroups_edit(req, res, userinfo, pathname)
+							$(page_admin_editforumgroups_edit, req, res, userinfo, pathname)
 						} else {
 							res.end("")
 						}
 						
 					} else if(pathname == "createforum") {
-						page_admin_createforum(req, res, userinfo)
+						$(page_admin_createforum, req, res, userinfo)
 						
 					} else if(pathname == "createforumgroup") {
-						page_admin_createforumgroup(req, res, userinfo)
+						$(page_admin_createforumgroup, req, res, userinfo)
 						
 					} else {
 						res.end("")
@@ -678,17 +707,16 @@ function server_(req, res) {
 				}
 				
 			} else if(pathname.startsWith("profile/")) {
-				page_profile(req, res, pathname.substr("profile/".length), userinfo)
+				$(page_profile, req, res, pathname.substr("profile/".length), userinfo)
 				
 			} else {
 				res.statusCode = 404;
-				res.end("404: Page does not exist")
+				res.end("(404) Page does not exist")
 			}
 		}
-	})().catch(function(e){
-		res.statusCode = 500;
-		res.end("500: An error occured")
-	})
+	}
+	
+	$(serve)
 }
 
 function start_server(){

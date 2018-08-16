@@ -45,34 +45,31 @@ module.exports = function(req, res, userinfo) {
             }
         });
 		if(!error){
-			req.on('end', function(){
+			req.on('end', async function(){
 				var data = querystring.parse(queryData)
 				
 				var user = data.user;
 				var pass = data.pass;
 				
-				database.get("select * from users where username=? collate nocase", [user], function(a,b){
-					if(b !== undefined){
-						var chkpass = b.password;
-						if(checkHash(chkpass, pass)){
-							var tkn = token(32)
-							var expires = Date.now() + Month*2
-							database.run("insert into session values(?, ?, ?)", [b.id, expires, tkn], function() {
-								database.run("update users set last_login=? where id=?", [Date.now(), b.id], function(){
-									res.writeHead(302, {
-										"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
-										"Location": "/"
-									})
-									res.end()
-								})
-							})
-						} else {
-							res.end("User does not exist or password is wrong")
-						}
+				var b = await get("select * from users where username=? collate nocase", user)
+				if(b !== undefined){
+					var chkpass = b.password;
+					if(checkHash(chkpass, pass)){
+						var tkn = token(32)
+						var expires = Date.now() + Month*2
+						await run("insert into session values(?, ?, ?)", [b.id, expires, tkn])
+						await run("update users set last_login=? where id=?", [Date.now(), b.id])
+						res.writeHead(302, {
+							"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
+							"Location": "/"
+						})
+						res.end()
 					} else {
 						res.end("User does not exist or password is wrong")
 					}
-				})
+				} else {
+					res.end("User does not exist or password is wrong")
+				}
 			});
 		}
 	}

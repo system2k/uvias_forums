@@ -1,14 +1,13 @@
-module.exports = function(req, res) {
+module.exports = async function(req, res) {
 	var cookie = req.headers.cookie
     cookie = parseCookie(cookie)
 	
 	var sid = cookie.sessionid
 	if(typeof sid !== "string") sid = "";
-	database.get("delete from session where key = ?", [sid], function(a, b){
-		res.writeHead(302, {
-			"Set-Cookie": "sessionid=; expires=" + cookieExpireDate(0) + ";",
-			"Location": req.headers.referer
-		})
-		res.end()
+	await run("delete from session where key = ?", sid)
+	res.writeHead(302, {
+		"Set-Cookie": "sessionid=; expires=" + cookieExpireDate(0) + ";",
+		"Location": req.headers.referer
 	})
+	res.end()
 }

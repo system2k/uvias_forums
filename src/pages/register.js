@@ -51,38 +51,32 @@ module.exports = function (req, res, userinfo) {
 			}
 		});
 		if(!error){
-			req.on('end', function(){
+			req.on('end', async function(){
 				var data = querystring.parse(queryData)
 				
 				var user = data.reg_user
 				var pass = data.reg_pass
 				
-				database.get("select username from users where username=? collate nocase", [user], function(a, b){
-					if(b === undefined) {
-						var date_now = Date.now()
-						database.run("insert into users values(null, ?, ?, ?, 0, 0, ?)", [user, encryptHash(pass), date_now, date_now], function(a, b){
-							
-							var new_user_id = this.lastID
-							var tkn = token(32)
-							var expires = Date.now() + Month*2
-							database.run("insert into session values(?, ?, ?)", [new_user_id, expires, tkn], function() {
-								database.run("update users set last_login=? where id=?", [Date.now(), new_user_id], function(){
-									res.writeHead(302, {
-										"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
-										"Location": "/"
-									})
-									res.end()
-								})
-							})
-							
-						})
-					} else {
-						res.writeHead(302, {
-							"Location": "/register?e=1"
-						})
-						res.end()
-					}
-				})
+				var b = await get("select username from users where username=? collate nocase", user)
+				if(b === undefined) {
+					var date_now = Date.now()
+					var new_us = await run("insert into users values(null, ?, ?, ?, 0, 0, ?)", [user, encryptHash(pass), date_now, date_now])
+					var new_user_id = new_us.lastID
+					var tkn = token(32)
+					var expires = Date.now() + Month*2
+					await run("insert into session values(?, ?, ?)", [new_user_id, expires, tkn])
+					await run("update users set last_login=? where id=?", [Date.now(), new_user_id])
+					res.writeHead(302, {
+						"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
+						"Location": "/"
+					})
+					res.end()
+				} else {
+					res.writeHead(302, {
+						"Location": "/register?e=1"
+					})
+					res.end()
+				}
 			});
 		}
 	}
