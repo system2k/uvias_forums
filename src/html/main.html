@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>
+		Subforums
+	</h1>
+	<table style="width: 100%" border=1>
+		<tbody>
+			<tr>
+				<th class="sfhead" style="width: 24%">
+					Name
+				</th>
+				<th class="sfhead" style="width: 57%">
+					Description
+				</th>
+				<th class="sfhead" style="width: 19%">
+					Threads
+				</th>
+			</tr>
+			{% for label in subforums %}
+			<tr style="height: 50px;">
+				<td style="background-color: #b9dcff;">
+					<a href="/sf/{{label.id}}">{{label.name}}</a>
+				</td>
+				<td style="background-color: #cee7ff;">
+					{{label.desc}}
+				</td>
+				<td style="background-color: #b9dcff;">
+					{{label.post_count}}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

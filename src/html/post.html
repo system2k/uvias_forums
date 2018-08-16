@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>
+		Subforums >> {{subforum_name}} >> Create thread
+	</h1>
+	<table style="width: 100%" border=1>
+		<tbody>
+			<tr>
+				<th class="sfhead">
+					Thread Creation Page
+				</th>
+			</tr>
+			<tr style="height: 512px;">
+				<td style="height: 0px;">
+					<div style="vertical-align: top; height: 100%">
+						Title: <input style="width: 90%" id="title">
+						<br>
+						<label style="vertical-align: top;">Body: </label><textarea id="body" style="width: 90%; height: 90%"></textarea>
+						<br>
+						<button style="float:right" onclick="postthread();">Post</button>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}
+
+{% block scriptcontent %}
+	function postthread(){
+		var request = new XMLHttpRequest();
+		request.open('POST', window.location.pathname, true);
+
+		request.onload = function() {
+			window.location.pathname = request.responseText
+		};
+
+		request.send("title=" + encodeURIComponent(document.getElementById("title").value) + "&body=" + encodeURIComponent(document.getElementById("body").value));
+	}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>
+		Subforums >> {{subforum_name}}
+	</h1>
+	<button onclick="location.href = '/post/{{subforum_id}}';">Create new thread</button>
+	<br>
+	<table style="width: 100%; table-layout: fixed;" border=1>
+		<tbody>
+			<tr>
+				<th class="sfhead">
+					Name
+				</th>
+				<th class="sfhead" style="width: 200px;">
+					Posted by
+				</th>
+			</tr>
+			{% for label in threads %}
+			<tr style="height: 30px;">
+				<td style="background-color: #b9dcff;">
+					<a href="/thread/{{label.id}}" style="word-break: break-all;">{{label.title}}</a>
+				</td>
+				<td style="background-color: #cee7ff; word-break: break-all;">
+					{{label.postedby}}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}
