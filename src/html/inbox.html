@@ -18,17 +18,19 @@
 					Date
 				</th>
 			</tr>
-			<tr style="height: 256px;">
-				<td>
-					
+			{% for label in messages %}
+			<tr>
+				<td style="word-break: break-all; padding: 0px 3px">
+					<button type="button" onclick="window.location.pathname='/view_message/{{label.id}}'">&gt;</button> <a href="/view_message/{{label.id}}">{{label.subject}}</a>
 				</td>
-				<td>
-					
+				<td style="white-space: nowrap; width: 1px; padding: 0px 3px">
+					<a href="/profile/{{label.from_id}}">{{label.username}}</a>
 				</td>
-				<td>
-					
+				<td style="white-space: nowrap; width: 1px; padding: 0px 3px">
+					{{label.date}}
 				</td>
 			</tr>
+			{% endfor %}
 		</tbody>
 	</table>
 {% endblock %}

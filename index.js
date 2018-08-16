@@ -1,1 +1,1 @@
-var server = require("./src/server.js").beginServer();
+var server = require("./src/server.js"); // everything in server.js is already executed when required

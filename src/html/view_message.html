@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<span class="location">
+		Messages >> {{subject}}
+	</span>
+	
+	<table class="defaultTable">
+		<tbody id="forum_rows" style="background-color: #cee7ff;">
+			<tr>
+				<th>
+					Message
+				</th>
+			</tr>
+			<tr>
+				<td>
+					<table style="border-spacing: 8px; border-collapse: separate; width: 100%;">
+						<tbody>
+							<tr>
+								<td style="text-align: right; width: 70px;">
+									From:
+								</td>
+								<td>
+									<a href="/profile/{{from_user.id}}">{{from_user.username}}</a>
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; width: 70px;">
+									Subject:
+								</td>
+								<td>
+									{{subject}}
+								</td>
+							</tr>
+							<tr>
+								<td style="text-align: right; vertical-align: top; width: 70px;">
+									Body:
+								</td>
+								<td>
+									<div style="background-color: #b9dcff; width: 100%; min-height: 50px; word-break: break-all;">
+										{{body}}
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock %}

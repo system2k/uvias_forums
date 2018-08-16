@@ -9,7 +9,7 @@ module.exports = function(req, res, id, userinfo) {
 				res.end("User does not exist")
 			} else {
 				var output = tmp(Object.assign({
-					username: b.username,
+					pf_username: b.username,
 					posts: b.posts,
 					joindate: date_created(b.date_joined),
 					rank: b.rank,

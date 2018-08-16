@@ -437,6 +437,9 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 											var sorted = sort_comment_paths(paths)
 											
 											var PostIndex = 0;
+											
+											var lastThreshold = 0
+											
 											for(i in sorted){
 												var d = sorted[i].length - 1
 												d *= 50
@@ -452,6 +455,20 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 												if(TH > max_threshold) {
 													max_threshold = TH
 												}
+												var end_slash_div = ""
+												
+												if(lastThreshold >= TH) {
+													var difference = (lastThreshold - TH) + 1
+													
+													if(i == 0) {
+														difference--
+													}
+													
+													for(var q = 0; q < difference; q++){
+														end_slash_div += "</div>"
+													}
+												}
+												
 												posts.push({
 													indent: d,
 													title: data.title,
@@ -464,10 +481,18 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 													user: data.user,
 													username: "",
 													post_date: data.post_date,
-													children_count: data.children_count
+													children_count: data.children_count,
+													end_slash_div: end_slash_div
 												})
 												PostIndex++
+												lastThreshold = TH
 											}
+											
+											var remaining_end_slash_div = ""
+											for(var r = 0; r < lastThreshold + 1; r++){
+												remaining_end_slash_div += "</div>"
+											}
+											
 											var usernameIndex = 0;
 											function usernameStep(){
 												database.get("select username from users where id=?", [posts[usernameIndex].user], function(e, username){
@@ -493,7 +518,8 @@ module.exports = function(req, res, id, userinfo, displayMode, change, sortOrder
 													max_threshold: max_threshold,
 													sortOrder: sortOrder,
 													f_g: f_g,
-													tracked: tracked
+													tracked: tracked,
+													remaining_end_slash_div: remaining_end_slash_div
 												}, userinfo));
 												ThreadedCookie(res, displayMode, cookie)
 												res.write(output)

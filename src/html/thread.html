@@ -89,6 +89,11 @@
 	<br>
 	
 	{% for label in posts %}
+	
+		{{label.end_slash_div | safe}}
+	
+		<div>
+	
 		<table style="width: 100%; table-layout: auto;" id="{{label.id}}:{{label.parent}}:{{label.threshold}}" class="post">
 			<tbody>
 				<tr>
@@ -101,8 +106,8 @@
 					</td>
 					<td>
 						<div style="width: 100%">
-							<div style="background-color:#4444EE; color: white; font-family: Verdana; word-wrap: break-word;">
-								<b style="font-size: 1em">{{label.username}}</b>
+							<div style="background-color: #4444EE; color: white; font-family: Verdana; word-wrap: break-word;">
+								<a href="/profile/{{label.user}}" style="color: #66ccff;"><b style="font-size: 1em;">{{label.username}}</b></a>
 								&nbsp;
 								<span>[ {{label.post_date}} ]</span>
 								<br>
@@ -118,6 +123,8 @@
 			</tbody>
 		</table>
 	{% endfor %}
+	{{remaining_end_slash_div | safe}}
+	
 	<div style="float:right">
 		<a href="javascript:collapse_all()">Collapse All</a>&nbsp;|&nbsp;
 		<a href="javascript:expand_all()">Expand All</a>
@@ -176,7 +183,11 @@
 	</div>
 	{% endif %}
 	
+	{% if !displayMode %}
 	<b style="font-family: Verdana; font-size: 0.6em">Page {{pagebar.page}} of {{pagebar.pageCount}}</b>
+	{% else %}
+	<b style="font-family: Verdana; font-size: 0.6em">Page 1 of 1</b>
+	{% endif %}
 {% endblock %}
 
 {% block scriptcontent %}

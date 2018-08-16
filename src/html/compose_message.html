@@ -5,11 +5,13 @@
 		Write message
 	</span>
 	
+	<div style="display:none;" id="to_user_id">{{to_user.id}}</div>
+	
 	<table class="defaultTable">
 		<tbody id="forum_rows" style="background-color: #DDEEFF;">
 			<tr>
 				<th colspan="2">
-					Write message to: {{to_username}}
+					Write message to: {{to_user.username}}
 				</th>
 			</tr>
 			<tr>
@@ -21,7 +23,7 @@
 									Subject:
 								</td>
 								<td>
-									<input style="width: 100%">
+									<input style="width: 100%" id="subject">
 								</td>
 							</tr>
 							<tr>
@@ -29,14 +31,17 @@
 									Body:
 								</td>
 								<td>
-									<textarea cols="90" rows="20"></textarea>
+									<textarea cols="90" rows="20" id="msg_body"></textarea>
 								</td>
 							</tr>
 							<tr>
 								<td style="width: 100px;">
 								</td>
 								<td>
-									<button type="button" style="padding: 2px 16px; float: right;">Send message</button>
+									<div style="float: right;">
+										<button type="button" style="padding: 2px 16px;" onclick="window.location.pathname='/profile/{{to_user.id}}'">Cancel</button>
+										<button type="button" style="padding: 2px 16px;" onclick="sendmessage()">Send message</button>
+									</div>
 								</td>
 							</tr>
 						</tbody>
@@ -45,4 +50,16 @@
 			</tr>
 		</tbody>
 	</table>
+{% endblock %}
+
+{% block scriptcontent %}
+	<script>
+		function sendmessage(){
+			FormSubmit("send_message", {
+				id: to_user_id.innerText,
+				subject: document.getElementById("subject").value,
+				body: document.getElementById("msg_body").value
+			}, window.location.pathname)
+		}
+	</script>
 {% endblock %}
