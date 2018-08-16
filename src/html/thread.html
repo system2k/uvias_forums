@@ -12,7 +12,7 @@
 		</select>
 		<select style="border-color:black; margin-bottom: 3px" name="sortOrder" onchange="changeMode();">
 			<option value="oldest_to_newest">Oldest to newest</option>
-			<option value="newest_to_oldest">Newest to oldest</option>
+			<option value="newest_to_oldest" {% if sortOrder == 1 %}selected{% endif %}>Newest to oldest</option>
 		</select>
 	</div>
 	{% if !displayMode %}
@@ -82,33 +82,43 @@
 		</tbody>
 	</table>
 	{% else %}
+	<div style="display:none;" id="max_threshold">{{max_threshold}}</div>
 	<br>
 	
 	{% for label in posts %}
-		<table style="width: 100%;">
+		<table style="width: 100%; table-layout: auto;" id="{{label.id}}:{{label.parent}}:{{label.threshold}}" class="post">
 			<tbody>
 				<tr>
+					{% if label.threshold > 0 %}
 					<td style="width: {{label.indent}}px">
-					
 					</td>
+					{% endif %}
 					<td style="width: 1px; vertical-align: top">
-						<img src="/images/collapse.png">
+						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})">
 					</td>
 					<td>
 						<div style="width: 100%">
-							<div style="background-color:#4444EE; color: white; font-family: Verdana">
-								{{label.title}}
+							<div style="background-color:#4444EE; color: white; font-family: Verdana; word-wrap: break-word;">
+								<b style="font-size: 1em">{{label.username}}</b>
+								&nbsp;
+								<span>[ {{label.post_date}} ]</span>
+								<br>
+								{{label.title}}&nbsp;<a href="{{label.reply_url}}" style="color:orange">Reply</a>
 							</div>
-							<div style="background-color:#9999FF">
-								{{label.body}}
+							<div style="background-color:#9999FF; word-wrap: break-word; word-break: break-all;">
+								{{label.body | safe}}
 							</div>
 						</div>
+						</br>
 					</td>
 				</tr>
 			</tbody>
 		</table>
-		</br>
 	{% endfor %}
+	<div style="float:right">
+		<a href="javascript:collapse_all()">Collapse All</a>&nbsp;|&nbsp;
+		<a href="javascript:expand_all()">Expand All</a>
+	</div>
 	
 	{% endif %}
 	<b style="font-family: Verdana; font-size: 0.6em">Page 1 of 1</b>
@@ -123,7 +133,6 @@
 			request.open('DELETE', "/thread/" + id, true);
 			request.onload = function() {
 				if(type == 0){
-					console.log(redir)
 					window.location.pathname = redir
 				}
 				if(type == 1){
@@ -135,6 +144,117 @@
 		function changeMode() {
 			var form = document.FORM
 			form.submit()
+		}
+		
+		var posts = document.getElementsByClassName("post")
+		var max_threshold;
+		window.addEventListener("load", function(){
+			if(document.getElementById("max_threshold")){
+				max_threshold = parseInt(document.getElementById("max_threshold").innerText)
+			}
+		});
+		var collapsed = {}
+		var collapsed_by = {}
+		function col(index, id, parent, threshold){
+		
+			var coll = collapsed[index]
+		
+			var i = 0
+			var c_idx = index
+			
+			var imgPos = 0;
+			if(index != 0) imgPos = 1
+			if(!coll) {
+				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/expand.png"
+				collapsed[index] = 1
+			} else {
+				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/collapse.png"
+			}
+			while(true){
+				var dat = posts[c_idx].id.split(":")
+				var idE = dat[0];
+				var parentE = dat[1];
+				var thresholdE = dat[2]
+				
+				if(idE != id){
+					if(threshold < thresholdE) {
+						if(!coll) {
+							posts[c_idx].hidden = true
+							if(!collapsed_by[c_idx]) collapsed_by[c_idx] = [index]
+						}
+						if(coll) {
+							if(collapsed_by[c_idx]){
+								if(collapsed_by[c_idx][0] == index){
+									posts[c_idx].hidden = false
+									delete collapsed_by[c_idx]
+								}
+							} else {
+								posts[c_idx].hidden = false
+							}
+							
+							delete collapsed[index]
+						}
+					} else {
+						break
+					}
+				} else {
+					if(coll) {
+						delete collapsed[index]
+					}
+				}
+				   
+				c_idx++
+				i++
+				if(i >= posts.length) break
+				if(c_idx >= posts.length) break
+			}
+		}
+		function collapse_all(){
+			var postIndex = []
+			for(var i = 0; i < posts.length; i++){
+				var imgPos = 0;
+				if(i != 0) imgPos = 1
+				
+				var dat = posts[i].id.split(":")
+				var id = parseInt(dat[0]);
+				var parent = parseInt(dat[1]);
+				var threshold = parseInt(dat[2])
+				
+				var img = posts[i].children[0].children[0].children[imgPos].children[0]
+				img.src = "/images/collapse.png"
+				
+				postIndex.push([i, id, parent, threshold])
+				
+				posts[i].hidden = false
+			}
+			collapsed = {};
+			collapsed_by = {}
+			
+			
+			var idx = max_threshold
+			for(var t = 0; t <= max_threshold; t++){
+				for(var search = 0; search < postIndex.length; search++){
+					if(postIndex[search][3] == idx) {
+						col(postIndex[search][0], postIndex[search][1], postIndex[search][2], postIndex[search][3])
+					}
+				}
+				idx--
+			}
+		}
+		function expand_all(){
+			for(var thres = 0; thres <= max_threshold; thres++){
+				for(var i = 0; i < posts.length; i++){
+					var dat = posts[i].id.split(":")
+					var id = dat[0];
+					var parent = dat[1]
+					var threshold = dat[2]
+					if(thres == threshold) {
+						if(collapsed[i]) {
+							col(i, id, parent, thres)
+						}
+					}
+				}
+			}
 		}
 	</script>
 {% endblock %}

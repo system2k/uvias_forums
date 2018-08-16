@@ -366,7 +366,8 @@ module.exports = function(){
 						user_id: user_id,
 						loggedin: loggedin,
 						top_rank: false,
-						page_path: path.href
+						page_path: path.href,
+						cookie: cookie
 					}
 					online_users[user_id] = Date.now()
 					if(loggedin) {
@@ -383,7 +384,8 @@ module.exports = function(){
 						user_id: 0,
 						loggedin: false,
 						top_rank: false,
-						page_path: path.href
+						page_path: path.href,
+						cookie: cookie
 					}
 					comp()
 				}

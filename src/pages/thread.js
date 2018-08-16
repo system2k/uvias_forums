@@ -33,7 +33,41 @@ function navigate(nav, path) {
 	return nav
 }
 
-module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, displayMode) {
+function ThreadedCookie(res, displayMode, cookie) {
+	if(displayMode == 1) {
+		res.writeHead(200, {
+			"Set-Cookie": "displayMode=" + displayMode + "; expires=" + cookieExpireDate(Date.now() + (1000*60*60*24*365)) + ";"
+		})
+	} else {
+		if(cookie.displayMode !== undefined) {
+			res.writeHead(200, {
+				"Set-Cookie": "displayMode=; expires=" + cookieExpireDate(0) + ";"
+			})
+		}
+	}
+}
+
+function cookieExpireDate(timestamp) {
+	var dayWeekList = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+	var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+	var _DayOfWeek = dayWeekList[new Date(timestamp).getDay()];
+	var _Day = new Date(timestamp).getDate();
+	var _Month = monthList[new Date(timestamp).getMonth()];
+	var _Year = new Date(timestamp).getFullYear();
+	var _Hour = new Date(timestamp).getHours();
+	var _Minute = new Date(timestamp).getMinutes();
+	var _Second = new Date(timestamp).getSeconds();
+
+	var compile = _DayOfWeek + ", " + _Day + " " + _Month + " " + _Year + " " + _Hour + ":" + _Minute + ":" + _Second + " UTC";
+	return compile
+}
+
+module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, displayMode, change, sortOrder) {
+	var cookie = userinfo.cookie
+	if(cookie.displayMode && !change) {
+		displayMode = 1
+	}
 	var method = req.method.toLowerCase()
 	if(method == "get"){
 		var tmp = swig.compileFile("./src/html/thread.html")
@@ -112,8 +146,13 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 								if(b.user == userinfo.user_id){
 									posts[0].owner = true
 								}
+								var post_sort_order_text = ""
 								
-								database.all("select * from threads where type=1 and thread=? and deleted = 0", [id], function(a,replies){
+								if(sortOrder) {
+									post_sort_order_text = " order by date_created desc"
+								}
+								
+								database.all("select * from threads where type=1 and thread=? and deleted = 0" + post_sort_order_text, [id], function(a,replies){ // includes a string (post_sort_order_text)
 									for(i in replies){
 										var owner = replies[i].user == userinfo.user_id
 										posts.push({
@@ -167,36 +206,26 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 											posts: posts,
 											nextThread: next_thread_id,
 											prevThread: prev_thread_id,
-											displayMode: displayMode
+											displayMode: displayMode,
+											sortOrder: sortOrder
 										}, userinfo));
 										
+										ThreadedCookie(res, displayMode, cookie)
 										res.write(output)
 										res.end()
 									}
 								})
 							} else {
-								var posts = [
-									/*{
-										username: b.user,
-										title: b.title,
-										post_date: date_created(b.date_created),
-										body: escapeBody(b.body),
-										replyurl: "/reply/" + id,
-										id: b.id,
-										type: 0,
-										redir: JSON.stringify("/sf/" + b.subforum),
-										joindate: 0,
-										userid: b.user,
-										online: !!online_users[b.user]
-									}*/
-								]
+								var posts = []
 								var paths = [[b.id]]
 								var tree = {
 									id: b.id,
 									path: [b.id],
 									title: b.title,
-									body: b.body,
-									children: []
+									body: escapeBody(b.body),
+									children: [],
+									user: b.user,
+									post_date: date_created(b.date_created)
 								}
 								var level = 3;
 								/*
@@ -213,7 +242,9 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 											children: [],
 											title: childs[i].title,
 											body: childs[i].body,
-											path: tree.path.concat(childs[i].id)
+											path: tree.path.concat(childs[i].id),
+											user: childs[i].user,
+											post_date: date_created(childs[i].date_created)
 										})
 										paths.push(tree.path.concat(childs[i].id))
 									}
@@ -232,16 +263,20 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 										if(found){
 											var index = 0
 											function step(){
-												database.get("select * from threads where type=1 and deleted=0 and parent=?", [latest[index][latest[index].length-1]], function(e, chd) {
-													if(chd){
-														navigate(tree, latest[index]).children.push({
-															id: chd.id,
-															path: latest[index].concat(chd.id),
-															title: chd.title,
-															body: chd.body,
-															children: []
-														})
-														paths.push(latest[index].concat(chd.id))
+												database.all("select * from threads where type=1 and deleted=0 and parent=?", [latest[index][latest[index].length-1]], function(e, chd) {
+													if(chd.length > 0){
+														for(c in chd){
+															navigate(tree, latest[index]).children.push({
+																id: chd[c].id,
+																path: latest[index].concat(chd[c].id),
+																title: chd[c].title,
+																body: chd[c].body,
+																children: [],
+																user: chd[c].user,
+																post_date: date_created(chd[c].date_created)
+															})
+															paths.push(latest[index].concat(chd[c].id))
+														}
 													}
 													
 													
@@ -262,7 +297,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									tree_data()
 									
 								})
-								
+								var max_threshold = 0
 								function _cont(){
 									var dumped = []
 									function dmp(tr) {
@@ -272,36 +307,72 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 										}
 									}
 									dmp(tree)
+									var PostIndex = 0;
 									for(i in dumped){
 										var d = dumped[i].length - 1
 										d *= 50
-										if(d === 0) d = 1
 										var data = navigate(tree, dumped[i])
+										
+										var parent = data.path
+										if(parent.length === 1) {
+											parent = 0
+										} else {
+											parent = parent[parent.length-2]
+										}
+										var TH = dumped[i].length - 1
+										if(TH > max_threshold) {
+											max_threshold = TH
+										}
 										posts.push({
 											indent: d,
 											title: data.title,
-											body: data.body
+											body: escapeBody(data.body),
+											reply_url: "/reply/" + data.id,
+											id: data.id,
+											parent: parent,
+											threshold: TH,
+											index: PostIndex,
+											user: data.user,
+											username: "",
+											post_date: data.post_date
+										})
+										PostIndex++
+									}
+									var usernameIndex = 0;
+									function usernameStep(){
+										database.get("select username from users where id=?", [posts[usernameIndex].user], function(e, username){
+											posts[usernameIndex].username = username.username;
+											usernameIndex++;
+											if(usernameIndex >= posts.length) {
+												usernameFinished()
+											} else {
+												usernameStep()
+											}
 										})
 									}
-									var output = tmp(Object.assign({
-										subforum_name: sf.name,
-										logged_in: userinfo.loggedin,
-										thread_title: "<none>",
-										posts: 0,
-										nextThread: 0,
-										prevThread: 0,
-										displayMode: displayMode,
-										posts: posts
-									}, userinfo));
-									
-									res.write(output)
-									res.end()
+									usernameStep()
+									function usernameFinished(){
+										var output = tmp(Object.assign({
+											subforum_name: sf.name,
+											logged_in: userinfo.loggedin,
+											thread_title: "<none>",
+											posts: 0,
+											nextThread: 0,
+											prevThread: 0,
+											displayMode: displayMode,
+											posts: posts,
+											max_threshold: max_threshold
+										}, userinfo));
+										ThreadedCookie(res, displayMode, cookie)
+										res.write(output)
+										res.end()
+									}
 								}
 								
 							}
 						})
 					} else {
-						module.exports(req, res, swig, database, b.thread, parseCookie, userinfo, date_created, querystring, online_users)
+						module.exports(req, res, swig, database, b.thread, parseCookie, userinfo, date_created, querystring, online_users, undefined, undefined, 0)
 					}
 				}
 			}
@@ -355,12 +426,16 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 		if(!error){
 			req.on('end', function(){
 				var data = querystring.parse(queryData)
-				if(data.displayMode == "threaded") {
-					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, 1)
-				} else {
-					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users)
+				var sortOrder = 0; // 0 = oldest to newest
+				if(data.sortOrder == "newest_to_oldest") {
+					sortOrder = 1 // 1 = newest to oldest
 				}
-				//res.end("<html>" + JSON.stringify(data) + "<br>This feature is not yet implemented</html>")
+				
+				if(data.displayMode == "threaded") {
+					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, 1, 1, sortOrder)
+				} else {
+					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, undefined, 1, sortOrder)
+				}
 			});
 		}
 	}
