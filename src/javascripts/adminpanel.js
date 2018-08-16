@@ -32,7 +32,10 @@ function addsubforum(){
 	td5.innerText = "0"
 	
 	var td6 = document.createElement("td")
-	td6.innerText = idCount + addedTotal
+	td6.innerText = "0"
+	
+	var td7 = document.createElement("td")
+	td7.innerText = idCount + addedTotal
 	
 	tr.appendChild(td1)
 	tr.appendChild(td2)
@@ -40,6 +43,7 @@ function addsubforum(){
 	tr.appendChild(td4)
 	tr.appendChild(td5)
 	tr.appendChild(td6)
+	tr.appendChild(td7)
 	
 	subforum_rows.appendChild(tr)
 	addedData.push([td2, td3])

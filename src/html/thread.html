@@ -94,7 +94,7 @@
 					</td>
 					{% endif %}
 					<td style="width: 1px; vertical-align: top">
-						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})">
+						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})" style="margin-right: 3px;{% if label.children_count == 0 %} visibility: hidden;{% endif %}">
 					</td>
 					<td>
 						<div style="width: 100%">
@@ -121,6 +121,58 @@
 	</div>
 	
 	{% endif %}
+	
+	{% if pagebar.pagebarVisible %}
+	<div style="float:right">
+		Go to page:&nbsp;
+		{% if pagebar.page != 1 %}
+			<a href="{{pagebar.path}}/{{pagebar.prevPage}}" class="control">Previous</a>
+		{% endif %}
+		
+		{% if pagebar.dddA %}
+			{% if pagebar.page != "1" %}<a href="{{pagebar.path}}" class="control">1</a>&nbsp;
+			{% else %}
+				<b>1<b>&nbsp;
+			{% endif %}
+			
+			{% if pagebar.page != "2" %}<a href="{{pagebar.path}}/2" class="control">2</a>&nbsp;
+			{% else %}
+				<b>2<b>&nbsp;
+			{% endif %}
+			
+			{% if pagebar.page != "3" %}<a href="{{pagebar.path}}/3" class="control">3</a>&nbsp;
+			{% else %}
+				<b>3<b>&nbsp;
+			{% endif %}
+			...&nbsp;
+		{% endif %}
+		
+		{% for data in pagebar.pages %}
+			{% if pagebar.page != data %}
+			<a href="{{pagebar.path}}{% if data != 1 %}/{{data}}{% endif %}" class="control">{{data}}</a>&nbsp;
+			{% else %}
+			<b>{{data}}</b>
+			{% endif %}
+		{% endfor %}
+		
+		{% if pagebar.dddB %}
+			...&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.a}}" class="control">{{pagebar.a}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.b}}" class="control">{{pagebar.b}}</a>&nbsp;
+			<a href="{{pagebar.path}}/{{pagebar.c}}" class="control">{{pagebar.c}}</a>
+		{% endif %}
+		
+		{% if pagebar.page < pagebar.pageCount %}
+			<a href="{{pagebar.path}}/{{pagebar.nextPage}}" class="control">Next</a>
+		{% endif %}
+		<br>
+		<div style="float:right">
+			<input id="pagenumber" maxlength="10" style="width: 100px"></input>&nbsp;<button onclick="updpage()" type="button">Goto page</button>
+			<p id="err" hidden>&nbsp;</p>
+		</div>
+	</div>
+	{% endif %}
+	
 	<b style="font-family: Verdana; font-size: 0.6em">Page 1 of 1</b>
 {% endblock %}
 
@@ -253,6 +305,47 @@
 							col(i, id, parent, thres)
 						}
 					}
+				}
+			}
+		}
+		// Page bar
+		var decs = "0123456789"
+		function updpage(){
+			var nbr = document.getElementById("pagenumber").value
+			var err = document.getElementById("err")
+			for(var i = 0; i < nbr.length; i++){
+				var isNumber = false;
+				for(var g = 0; g < 10; g++){
+					var c = nbr.charAt(i);
+					if(c == g){
+						isNumber = true;
+						break
+					}
+				}
+				if(!isNumber) {
+					err.innerText = "Invalid number"
+					err.hidden = false
+					return
+				}
+			}
+			var path = window.location.pathname.split("/");
+			var base = [path[0], path[1], path[2]].join("/")
+			
+			var page = path[3]
+			if(page === undefined || page === "" || isNaN(page)){
+				page = 1
+			}
+			if(nbr === undefined || nbr === "" || isNaN(nbr)){
+				nbr = 1
+			}
+			if(nbr == "0") {
+				nbr = 1
+			}
+			if(page != nbr){
+				if(nbr == 1) {
+					window.location.pathname = base
+				} else {
+					window.location.pathname = base + "/" + nbr
 				}
 			}
 		}

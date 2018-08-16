@@ -27,7 +27,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, q
 					if(pg < 0) {
 						pg = 0
 					}
-					
+					if(!pageCount) pageCount = 1
 					var pagebar = {
 						dddA: false,
 						pages: [],

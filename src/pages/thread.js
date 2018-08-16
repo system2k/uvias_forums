@@ -63,13 +63,30 @@ function cookieExpireDate(timestamp) {
 	return compile
 }
 
+var postsPerPage = 30;
+
 module.exports = function(req, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, displayMode, change, sortOrder) {
 	var cookie = userinfo.cookie
 	if(cookie.displayMode && !change) {
 		displayMode = 1
 	}
+	id=id.toString()
 	var method = req.method.toLowerCase()
 	if(method == "get"){
+		var page = 1;
+	
+		id = id.split("/")
+		if(typeof id == "object" && id.length == 1){
+			id = id[0]
+		}
+		if(typeof id == "object" && id.length > 1){
+			page = id[1];
+			id = id[0];
+		}
+		if(!page || page == ""){
+			page = 1
+		}
+		
 		var tmp = swig.compileFile("./src/html/thread.html")
 		
 		database.get("select * from threads where id=? and deleted = 0", [id], function(a, b){
@@ -123,99 +140,167 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 					if(b.type == 0){
 						database.get("select name from subforums where id=?", [b.subforum], function(err, sf){
 							if(!displayMode){
-								var posts = [
-									{
-										username: b.user,
-										title: b.title,
-										post_date: date_created(b.date_created),
-										body: escapeBody(b.body),
-										replyurl: "/reply/" + id,
-										postcount: 0,
-										consolas: !!b.font,
-										owner: false,
-										id: b.id,
-										type: 0,
-										redir: JSON.stringify("/sf/" + b.subforum),
-										joindate: 0,
-										userid: b.user,
-										alternate: alternate,
-										online: !!online_users[b.user]
-									}
-								]
-								alternate++
-								if(b.user == userinfo.user_id){
-									posts[0].owner = true
+								var posts = []
+								
+								var threadPost = {
+									username: b.user,
+									title: b.title,
+									post_date: date_created(b.date_created),
+									body: escapeBody(b.body),
+									replyurl: "/reply/" + id,
+									postcount: 0,
+									consolas: !!b.font,
+									owner: false,
+									id: b.id,
+									type: 0,
+									redir: JSON.stringify("/sf/" + b.subforum),
+									joindate: 0,
+									userid: b.user,
+									alternate: alternate,
+									online: !!online_users[b.user]
 								}
+								
+								if(page == 1) {
+									posts.push(threadPost)
+									alternate++
+									if(b.user == userinfo.user_id){
+										posts[0].owner = true
+									}
+								}
+								
 								var post_sort_order_text = ""
 								
 								if(sortOrder) {
 									post_sort_order_text = " order by date_created desc"
 								}
 								
-								database.all("select * from threads where type=1 and thread=? and deleted = 0" + post_sort_order_text, [id], function(a,replies){ // includes a string (post_sort_order_text)
-									for(i in replies){
-										var owner = replies[i].user == userinfo.user_id
-										posts.push({
-											username: replies[i].user,
-											title: replies[i].title,
-											post_date: date_created(replies[i].date_created),
-											body: escapeBody(replies[i].body),
-											replyurl: "/reply/" + replies[i].id,
-											postcount: 0,
-											consolas: !!replies[i].font,
-											owner: owner,
-											id: replies[i].id,
-											type: 1,
-											redir: "\"\"",
-											joindate: 0,
-											userid: replies[i].user,
-											alternate: alternate,
-											online: !!online_users[replies[i].user]
-										})
-										alternate++
-										alternate %= 2
-									}
-									var usernames = [];
-									var postcounts = [];
-									var joindates = []
-									var indx = 0;
-									function getall(){
-										database.get("select * from users where id=?", [posts[indx].username], function(a,usr){
-											indx++;
-											usernames.push(usr.username)
-											postcounts.push(usr.posts)
-											joindates.push(usr.date_joined)
-											if(posts.length > indx){
-												getall()
-											} else {
-												complete()
-											}
-										})
-									}
-									getall()
-									function complete(){
-										for(i in usernames){
-											posts[i].username = usernames[i]
-											posts[i].postcount = postcounts[i]
-											posts[i].joindate = joindate_label(joindates[i])
+								
+								var tempThreadTotalPosts = postsPerPage
+								var postStartingPoint = (page-1)*postsPerPage
+								if(page == 1) {
+									tempThreadTotalPosts--
+								} else {
+									postStartingPoint--
+								}
+								
+								database.get("select count(*) as cnt from threads where thread=? and deleted = 0", [id], function(er, cnt){
+									database.all("select * from threads where type=1 and thread=? and deleted = 0" + post_sort_order_text + " limit ?,?", [id, postStartingPoint, tempThreadTotalPosts], function(a,replies){ // includes a string (post_sort_order_text)
+										for(i in replies){
+											var owner = replies[i].user == userinfo.user_id
+											posts.push({
+												username: replies[i].user,
+												title: replies[i].title,
+												post_date: date_created(replies[i].date_created),
+												body: escapeBody(replies[i].body),
+												replyurl: "/reply/" + replies[i].id,
+												postcount: 0,
+												consolas: !!replies[i].font,
+												owner: owner,
+												id: replies[i].id,
+												type: 1,
+												redir: "\"\"",
+												joindate: 0,
+												userid: replies[i].user,
+												alternate: alternate,
+												online: !!online_users[replies[i].user]
+											})
+											alternate++
+											alternate %= 2
 										}
-										var output = tmp(Object.assign({
-											subforum_name: sf.name,
-											logged_in: userinfo.loggedin,
-											thread_title: b.title,
-											posts: posts,
-											nextThread: next_thread_id,
-											prevThread: prev_thread_id,
-											displayMode: displayMode,
-											sortOrder: sortOrder
-										}, userinfo));
 										
-										ThreadedCookie(res, displayMode, cookie)
-										res.write(output)
-										res.end()
-									}
+										var pageCount = Math.ceil(cnt.cnt / postsPerPage)
+										
+										var pg = page - 5
+										if(pg < 0) {
+											pg = 0
+										}
+										
+										var pagebar = {
+											dddA: false,
+											pages: [],
+											dddB: false,
+											a: pageCount-2,
+											b: pageCount-1,
+											c: pageCount,
+											path: "/thread/" + b.id,
+											page: page,
+											threadcount: cnt.cnt,
+											pagebarVisible: true,
+											pageCount: pageCount,
+											nextPage: (parseInt(page)+1).toString(),
+											prevPage: (parseInt(page)-1).toString()
+										}
+										if(pageCount <= 1) {
+											pagebar.pagebarVisible = false
+										}
+										
+										var min = 1 + pg
+										var max = 10 + pg
+										if(max > pageCount){
+											max = pageCount
+											min = pageCount-9
+											if(min < 1) {
+												min = 1
+											}
+										}
+										
+										if(min >= 4) {
+											pagebar.dddA = true
+										}
+										for(var i = min; i <= max; i++){
+											pagebar.pages.push(i)
+										}
+										if(pageCount - max >= 4){
+											pagebar.dddB = true
+										}
+										
+										var usernames = [];
+										var postcounts = [];
+										var joindates = []
+										var indx = 0;
+										function getall(){
+											database.get("select * from users where id=?", [posts[indx].username], function(a,usr){
+												indx++;
+												usernames.push(usr.username)
+												postcounts.push(usr.posts)
+												joindates.push(usr.date_joined)
+												if(posts.length > indx){
+													getall()
+												} else {
+													complete()
+												}
+											})
+										}
+										if(posts.length > 0){
+											getall()
+										} else {
+											complete()
+										}
+										function complete(){
+											for(i in usernames){
+												posts[i].username = usernames[i]
+												posts[i].postcount = postcounts[i]
+												posts[i].joindate = joindate_label(joindates[i])
+											}
+											var output = tmp(Object.assign({
+												subforum_name: sf.name,
+												logged_in: userinfo.loggedin,
+												thread_title: b.title,
+												posts: posts,
+												nextThread: next_thread_id,
+												prevThread: prev_thread_id,
+												displayMode: displayMode,
+												sortOrder: sortOrder,
+												pagebar: pagebar
+											}, userinfo));
+											
+											ThreadedCookie(res, displayMode, cookie)
+											res.write(output)
+											res.end()
+										}
+									})
 								})
-							} else {
+							} else {// threaded mode
 								var posts = []
 								var paths = [[b.id]]
 								var tree = {
@@ -225,7 +310,8 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 									body: escapeBody(b.body),
 									children: [],
 									user: b.user,
-									post_date: date_created(b.date_created)
+									post_date: date_created(b.date_created),
+									children_count: 0
 								}
 								var level = 3;
 								/*
@@ -237,6 +323,7 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 								*/
 								database.all("select * from threads where type = 1 and deleted=0 and parent=?", [b.id], function(e, childs){
 									for(i in childs){
+										tree.children_count++
 										tree.children.push({
 											id: childs[i].id,
 											children: [],
@@ -244,7 +331,8 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 											body: childs[i].body,
 											path: tree.path.concat(childs[i].id),
 											user: childs[i].user,
-											post_date: date_created(childs[i].date_created)
+											post_date: date_created(childs[i].date_created),
+											children_count: 0
 										})
 										paths.push(tree.path.concat(childs[i].id))
 									}
@@ -266,7 +354,9 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 												database.all("select * from threads where type=1 and deleted=0 and parent=?", [latest[index][latest[index].length-1]], function(e, chd) {
 													if(chd.length > 0){
 														for(c in chd){
-															navigate(tree, latest[index]).children.push({
+															var par = navigate(tree, latest[index])
+															par.children_count++
+															par.children.push({
 																id: chd[c].id,
 																path: latest[index].concat(chd[c].id),
 																title: chd[c].title,
@@ -334,7 +424,8 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 											index: PostIndex,
 											user: data.user,
 											username: "",
-											post_date: data.post_date
+											post_date: data.post_date,
+											children_count: data.children_count
 										})
 										PostIndex++
 									}
@@ -355,13 +446,14 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 										var output = tmp(Object.assign({
 											subforum_name: sf.name,
 											logged_in: userinfo.loggedin,
-											thread_title: "<none>",
+											thread_title: b.title,
 											posts: 0,
 											nextThread: 0,
 											prevThread: 0,
 											displayMode: displayMode,
 											posts: posts,
-											max_threshold: max_threshold
+											max_threshold: max_threshold,
+											sortOrder: sortOrder
 										}, userinfo));
 										ThreadedCookie(res, displayMode, cookie)
 										res.write(output)
@@ -430,7 +522,6 @@ module.exports = function(req, res, swig, database, id, parseCookie, userinfo, d
 				if(data.sortOrder == "newest_to_oldest") {
 					sortOrder = 1 // 1 = newest to oldest
 				}
-				
 				if(data.displayMode == "threaded") {
 					module.exports({method: "GET"}, res, swig, database, id, parseCookie, userinfo, date_created, querystring, online_users, 1, 1, sortOrder)
 				} else {

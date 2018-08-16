@@ -1,0 +1,34 @@
+Forum lines of code
+As of June 18, 2017
+
+===Server scripts===
+server.js		517
+admin.js		90
+login.js		66
+logout.js		14
+main.js			18
+post.js			77
+profile.js		24
+register.js		59
+reply.js		96
+sf.js			233
+thread.js		443
+
+===Website javascript files===
+adminpanel.js		120
+
+===HTML files===
+admin.html		68
+base.html		228
+main.html		45
+post.html		72
+profile.html		12
+register.html		35
+reply.html		72
+sf.html			150
+thread.html		260
+
+===TOTAL===
+JavaScript		1757
+HTML			942
+Total			2699
