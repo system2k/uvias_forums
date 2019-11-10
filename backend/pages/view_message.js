@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo, id){
-	if(userinfo.logged_in) {
+module.exports.GET = async function(req, serve, vars) {
+    if(userinfo.logged_in) {
 		var message = await get("select * from messages where id=?", id)
 		if(message){
 			if(message.to_id == userinfo.user_id) {
@@ -40,4 +40,8 @@ module.exports = async function(req, res, userinfo, id){
 	} else {
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

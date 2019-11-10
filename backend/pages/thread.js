@@ -1,108 +1,5 @@
-function escapeBody(body){
-	return body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")
-}
-
-function navigate(nav, path) {
-	for(var i = 1; i < path.length; i++){
-		var ch = nav.children;
-		if(!ch) {
-			return false
-		} else {
-			for(z in ch){
-				if(ch[z].id == path[i]) {
-					nav = ch[z]
-					break
-				}
-			}
-		}
-	}
-	return nav
-}
-
-function ThreadedCookie(res, displayMode, cookie) {
-	if(displayMode == 1) {
-		if(cookie.displayMode !== 1){
-			res.writeHead(200, {
-				"Set-Cookie": "displayMode=" + displayMode + "; expires=" + cookieExpireDate(Date.now() + (1000*60*60*24*365)) + ";"
-			})
-		}
-	} else {
-		if(cookie.displayMode !== undefined) {
-			res.writeHead(200, {
-				"Set-Cookie": "displayMode=; expires=" + cookieExpireDate(0) + ";"
-			})
-		}
-	}
-}
-
-function cookieExpireDate(timestamp) {
-	var dayWeekList = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-	var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-	var _DayOfWeek = dayWeekList[new Date(timestamp).getDay()];
-	var _Day = new Date(timestamp).getDate();
-	var _Month = monthList[new Date(timestamp).getMonth()];
-	var _Year = new Date(timestamp).getFullYear();
-	var _Hour = new Date(timestamp).getHours();
-	var _Minute = new Date(timestamp).getMinutes();
-	var _Second = new Date(timestamp).getSeconds();
-
-	var compile = _DayOfWeek + ", " + _Day + " " + _Month + " " + _Year + " " + _Hour + ":" + _Minute + ":" + _Second + " UTC";
-	return compile
-}
-
-function comparePaths(a,b) {
-	for(var i = 0, total = Math.max(a.length, b.length); i < total; i++){
-		var c1 = a[i]
-		var c2 = b[i]
-		if(c1 === undefined) {
-			return "<" // a < b
-		}
-		if(c2 === undefined) {
-			return ">" // a > b
-		}
-		if(c1 > c2) {
-			return ">" // a > b
-		}
-		if(c1 < c2) {
-			return "<" // a < b
-		}
-	}
-	return "=" // a = b
-}
-
-function sort_comment_paths(list) { // Looks like selection sort
-	var newList = []
-	
-	var least = list[0];
-	for(var i = 0; i < list.length; i++){
-		if(comparePaths(list[i], least) == "<") {
-			least = list[i]
-		}
-	}
-	
-	var current = least
-	newList.push(current)
-	for(var i = 0; i < list.length; i++){
-		var lst = current
-		var changes = false;
-		for(var t = 0; t < list.length; t++){
-			if(comparePaths(list[t], current) == ">") {
-				if(!(changes && comparePaths(list[t], lst) == ">")) {
-					lst = list[t]
-					changes = true
-				}
-			}
-		}
-		if(changes) {
-			current = lst
-			newList.push(current)
-		}
-	}
-	return newList
-}
-module.exports = async function(req, res, id, userinfo, displayMode, change, sortOrder) {
-	var cookie = userinfo.cookie
+module.exports.GET = async function(req, serve, vars) {
+    var cookie = userinfo.cookie
 	if(cookie.displayMode && !change) {
 		displayMode = 1
 	}
@@ -604,4 +501,112 @@ module.exports = async function(req, res, id, userinfo, displayMode, change, sor
 			})});
 		}
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
+}
+
+function escapeBody(body){
+	return body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")
+}
+
+function navigate(nav, path) {
+	for(var i = 1; i < path.length; i++){
+		var ch = nav.children;
+		if(!ch) {
+			return false
+		} else {
+			for(z in ch){
+				if(ch[z].id == path[i]) {
+					nav = ch[z]
+					break
+				}
+			}
+		}
+	}
+	return nav
+}
+
+function ThreadedCookie(res, displayMode, cookie) {
+	if(displayMode == 1) {
+		if(cookie.displayMode !== 1){
+			res.writeHead(200, {
+				"Set-Cookie": "displayMode=" + displayMode + "; expires=" + cookieExpireDate(Date.now() + (1000*60*60*24*365)) + ";"
+			})
+		}
+	} else {
+		if(cookie.displayMode !== undefined) {
+			res.writeHead(200, {
+				"Set-Cookie": "displayMode=; expires=" + cookieExpireDate(0) + ";"
+			})
+		}
+	}
+}
+
+function cookieExpireDate(timestamp) {
+	var dayWeekList = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+	var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+	var _DayOfWeek = dayWeekList[new Date(timestamp).getDay()];
+	var _Day = new Date(timestamp).getDate();
+	var _Month = monthList[new Date(timestamp).getMonth()];
+	var _Year = new Date(timestamp).getFullYear();
+	var _Hour = new Date(timestamp).getHours();
+	var _Minute = new Date(timestamp).getMinutes();
+	var _Second = new Date(timestamp).getSeconds();
+
+	var compile = _DayOfWeek + ", " + _Day + " " + _Month + " " + _Year + " " + _Hour + ":" + _Minute + ":" + _Second + " UTC";
+	return compile
+}
+
+function comparePaths(a,b) {
+	for(var i = 0, total = Math.max(a.length, b.length); i < total; i++){
+		var c1 = a[i]
+		var c2 = b[i]
+		if(c1 === undefined) {
+			return "<" // a < b
+		}
+		if(c2 === undefined) {
+			return ">" // a > b
+		}
+		if(c1 > c2) {
+			return ">" // a > b
+		}
+		if(c1 < c2) {
+			return "<" // a < b
+		}
+	}
+	return "=" // a = b
+}
+
+function sort_comment_paths(list) { // Looks like selection sort
+	var newList = []
+	
+	var least = list[0];
+	for(var i = 0; i < list.length; i++){
+		if(comparePaths(list[i], least) == "<") {
+			least = list[i]
+		}
+	}
+	
+	var current = least
+	newList.push(current)
+	for(var i = 0; i < list.length; i++){
+		var lst = current
+		var changes = false;
+		for(var t = 0; t < list.length; t++){
+			if(comparePaths(list[t], current) == ">") {
+				if(!(changes && comparePaths(list[t], lst) == ">")) {
+					lst = list[t]
+					changes = true
+				}
+			}
+		}
+		if(changes) {
+			current = lst
+			newList.push(current)
+		}
+	}
+	return newList
 }

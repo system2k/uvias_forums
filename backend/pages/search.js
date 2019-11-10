@@ -1,5 +1,5 @@
-module.exports = function(req, res, userinfo, found, prev_str){
-	var method = req.method.toLowerCase()
+module.exports.GET = async function(req, serve, vars) {
+    var method = req.method.toLowerCase()
 	
 	if(method === "get") {
 		var tmp = swig.compileFile("./src/html/search.html")
@@ -99,4 +99,8 @@ module.exports = function(req, res, userinfo, found, prev_str){
 			}
 		});
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

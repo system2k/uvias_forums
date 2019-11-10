@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo, id){
-	var tmp = swig.compileFile("./src/html/admin_editforums_edit.html")
+module.exports.GET = async function(req, serve, vars) {
+    var tmp = swig.compileFile("./src/html/admin_editforums_edit.html")
 	
 	var forum;
 	var forum_group;
@@ -34,4 +34,8 @@ module.exports = async function(req, res, userinfo, id){
 		res.write(output)
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

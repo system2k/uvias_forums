@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo){
-	var tmp = swig.compileFile("./src/html/admin_createforum.html")
+module.exports.GET = async function(req, serve, vars) {
+    var tmp = swig.compileFile("./src/html/admin_createforum.html")
 	
 	var forum_groups = []
 	
@@ -16,4 +16,8 @@ module.exports = async function(req, res, userinfo){
 		res.write(output)
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

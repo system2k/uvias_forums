@@ -1,5 +1,5 @@
-module.exports = async function(req, res, id, userinfo) {
-	if(userinfo.logged_in == false){
+module.exports.GET = async function(req, serve, vars) {
+    if(userinfo.logged_in == false){
 		res.end("You need to be logged in")
 		return
 	}
@@ -73,4 +73,8 @@ module.exports = async function(req, res, id, userinfo) {
 			res.end("You need to be logged in")
 		}
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

@@ -1,5 +1,5 @@
-module.exports = async function(req, res, id, userinfo) {
-	var method = req.method.toLowerCase()
+module.exports.GET = async function(req, serve, vars) {
+    var method = req.method.toLowerCase()
 	
 	if(method == "get"){
 		var tmp = swig.compileFile("./src/html/profile.html")
@@ -21,4 +21,8 @@ module.exports = async function(req, res, id, userinfo) {
 			res.end()
 		}
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

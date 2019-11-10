@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo){
-	if(userinfo.logged_in) {
+module.exports.GET = async function(req, serve, vars) {
+    if(userinfo.logged_in) {
 		var tmp = swig.compileFile("./src/html/inbox.html")
 		
 		var messages = []
@@ -61,4 +61,8 @@ module.exports = async function(req, res, userinfo){
 	} else {
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

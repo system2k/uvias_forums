@@ -1,9 +1,9 @@
 {
-    "name": "forum",
+    "name": "uvias_forums",
     "version": "1.0.0",
-    "description": "Forum",
+    "description": "Uvias Forums",
     "dependencies": {
-        "sqlite3": "^4.0.1",
+        "sqlite3": "^4.1.0",
         "swig": "*"
     },
     "scripts": {

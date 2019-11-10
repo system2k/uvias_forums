@@ -1,149 +1,200 @@
 var http = require("http")
-url = require("url")
+var url = require("url")
 var fs = require("fs")
 var sql = require("sqlite3").verbose()
-swig = require("swig")
-querystring = require("querystring")
-crypto = require("crypto")
+var swig = require("swig")
+var querystring = require("querystring")
+var crypto = require("crypto")
 
 var port = 1337
-postsPerPage = 30; // posts per page on threads
-database = new sql.Database("../database.db")
+var postsPerPage = 30; // posts per page on threads
+var dataPath = "../data";
+var staticPath = "./frontend/static/";
+var staticPathWeb = "static/";
+if(!fs.existsSync(dataPath)) {
+    fs.mkdirSync(dataPath);
+}
+var databasePath = dataPath + "/" + "database.db";
 console.log("Starting server...");
 
-get = async function(command, params) {
-	if(!params) params = []
-	return new Promise(function(r) {
-		database.get(command, params, function(err, res) {
-			if(err) {
-				return rej(false)
-			}
-			r(res)
-		})
-	})
+// properly take all data from an error stack
+function process_error_arg(e) {
+    var error = {};
+    if(typeof e == "object") {
+        // retrieve hidden properties
+        var keys = Object.getOwnPropertyNames(e);
+        for(var i = 0; i < keys.length; i++) {
+            error[keys[i]] = e[keys[i]];
+        }
+    } else {
+        error.data = e;
+    }
+    return error;
 }
 
-run = async function(command, params) {
-	if(!params) params = []
-	var err = false
-	return new Promise(function(r, rej) {
-		database.run(command, params, function(err, res) {
-			if(err) {
-				return rej(err)
-			}
-			var info = {
-				lastID: this.lastID
-			}
-			r(info)
-		})
-	})
+function asyncDbSystem(database) {
+    const db = {
+        // gets data from the database (only 1 row at a time)
+        get: async function(command, params) {
+            if(params == void 0 || params == null) params = []
+            return new Promise(function(r, rej) {
+                database.get(command, params, function(err, res) {
+                    if(err) {
+                        return rej({
+                            sqlite_error: process_error_arg(err),
+                            input: { command, params }
+                        });
+                    }
+                    r(res);
+                });
+            });
+        },
+        // runs a command (insert, update, etc...) and might return "lastID" if needed
+        run: async function(command, params) {
+            if(params == void 0 || params == null) params = [];
+            var err = false;
+            return new Promise(function(r, rej) {
+                database.run(command, params, function(err, res) {
+                    if(err) {
+                        return rej({
+                            sqlite_error: process_error_arg(err),
+                            input: { command, params }
+                        });
+                    }
+                    var info = {
+                        lastID: this.lastID
+                    }
+                    r(info);
+                });
+            });
+        },
+        // gets multiple rows in one command
+        all: async function(command, params) {
+            if(params == void 0 || params == null) params = [];
+            return new Promise(function(r, rej) {
+                database.all(command, params, function(err, res) {
+                    if(err) {
+                        return rej({
+                            sqlite_error: process_error_arg(err),
+                            input: { command, params }
+                        });
+                    }
+                    r(res);
+                });
+            });
+        },
+        // get multiple rows but execute a function for every row
+        each: async function(command, params, callbacks) {
+            if(typeof params == "function") {
+                callbacks = params;
+                params = [];
+            }
+            var def = callbacks;
+            var callback_error = false;
+            var cb_err_desc = "callback_error";
+            callbacks = function(e, data) {
+                try {
+                    def(data);
+                } catch(e) {
+                    callback_error = true;
+                    cb_err_desc = e;
+                }
+            }
+            return new Promise(function(r, rej) {
+                database.each(command, params, callbacks, function(err, res) {
+                    if(err) return rej({
+                        sqlite_error: process_error_arg(err),
+                        input: { command, params }
+                    });
+                    if(callback_error) return rej(cb_err_desc);
+                    r(res);
+                });
+            });
+        },
+        // like run, but executes the command as a SQL file
+        // (no comments allowed, and must be semicolon separated)
+        exec: async function(command) {
+            return new Promise(function(r, rej) {
+                database.exec(command, function(err) {
+                    if(err) {
+                        return rej({
+                            sqlite_error: process_error_arg(err),
+                            input: { command }
+                        });
+                    }
+                    r(true);
+                });
+            });
+        }
+    };
+    return db;
 }
 
-all = async function(command, params) {
-	if(!params) params = []
-	return new Promise(function(r, rej) {
-		database.all(command, params, function(err, res) {
-			if(err) {
-				return rej(err)
-			}
-			r(res)
-		})
-	})
+var database = new sql.Database(databasePath);
+var db = asyncDbSystem(database);
+
+
+function listDir(addr, MP, dsu, po, opt) { // object, file path, web path, path only, options
+    if(!opt) opt = {};
+    var con = fs.readdirSync(MP)
+    for(var i in con) {
+        var currentPath = MP + con[i]
+        if(!fs.lstatSync(currentPath).isDirectory()) {
+            if(!po) {
+                addr[dsu + con[i]] = fs.readFileSync(currentPath)
+            } else {
+                addr[dsu + con[i]] = currentPath;
+            }
+        } else {
+            // Omitted folder? Cancel scanning folder
+            if(con[i] == opt.omit_folder) {
+                return;
+            }
+            listDir(addr, MP + con[i] + "/", dsu + con[i] + "/", po)
+        }
+    }
 }
 
-each = async function(command, params, callbacks) {
-	if(typeof params == "function") {
-		callbacks = params
-		params = []
-	}
-	var def = callbacks
-	var callback_error = false
-	callbacks = function() {
-		try {
-			def(...arguments)
-		} catch(e) {
-			callback_error = true
-		}
-	}
-	return new Promise(function(r, rej) {
-		database.each(command, params, callbacks, function(err, res) {
-			if(err || callback_error) {
-				return rej(err)
-			}
-			r(res)
-		})
-	})
-}
-
-exec = async function(command) {
-	return new Promise(function(r, rej) {
-		database.exec(command, function(err) {
-			if(err) {
-				return rej(err)
-			}
-			r(true)
-		})
-	})
-}
-
-var pre_loaded_images = {};
-var pre_loaded_content = {};
-function pre_load(type, name, path) {
-	if(type == "img") pre_loaded_images[name] = fs.readFileSync(path)
-	if(type == "js") pre_loaded_content[name] = fs.readFileSync(path)
-}
-pre_load("img", "fav_icon", "./src/image/fav_icon.png")
-pre_load("img", "bar", "./src/image/bar.gif")
-pre_load("img", "barGray", "./src/image/barGray.gif")
-pre_load("img", "bottom_bar", "./src/image/bottom_bar.png")
-pre_load("img", "sidebar", "./src/image/sidebar.png")
-pre_load("img", "offline", "./src/image/offline.png")
-pre_load("img", "online", "./src/image/online.png")
-pre_load("img", "thread", "./src/image/thread.png")
-pre_load("img", "thread_read", "./src/image/thread_read.png")
-pre_load("img", "forum", "./src/image/forum.png")
-pre_load("img", "expand", "./src/image/expand.png")
-pre_load("img", "collapse", "./src/image/collapse.png")
-
-pre_load("js", "adminpanel", "./src/javascripts/adminpanel.js")
+var static_data = {};
+listDir(static_data, staticPath, staticPathWeb);
 
 var pages = {
-	page_main: "main.js",
-	page_Forum: "sf.js",
-	page_thread: "thread.js",
-	page_register: "register.js",
-	page_post: "post.js",
-	page_login: "login.js",
-	page_logout: "logout.js",
-	page_reply: "reply.js",
-	page_admin: "admin.js",
-	page_admin_editannouncement: "admin_editannouncement.js",
-	page_admin_editforums: "admin_editforums.js",
-	page_admin_editforumgroups: "admin_editforumgroups.js",
-	page_admin_createforum: "admin_createforum.js",
-	page_admin_editforumgroups_edit: "admin_editforumgroups_edit.js",
-	page_admin_createforumgroup: "admin_createforumgroup.js",
-	page_admin_editforums_edit: "admin_editforums_edit.js",
-	page_profile: "profile.js",
-	page_forum_group: "forum_group.js",
-	page_myforums: "myforums.js",
-	page_members: "members.js",
-	page_search: "search.js",
-	page_inbox: "inbox.js",
-	page_compose_message: "compose_message.js",
-	page_view_message: "view_message.js"
+	main: "main.js",
+	Forum: "sf.js",
+	thread: "thread.js",
+	register: "register.js",
+	post: "post.js",
+	login: "login.js",
+	logout: "logout.js",
+	reply: "reply.js",
+	admin: "admin.js",
+	admin_editannouncement: "admin_editannouncement.js",
+	admin_editforums: "admin_editforums.js",
+	admin_editforumgroups: "admin_editforumgroups.js",
+	admin_createforum: "admin_createforum.js",
+	admin_editforumgroups_edit: "admin_editforumgroups_edit.js",
+	admin_createforumgroup: "admin_createforumgroup.js",
+	admin_editforums_edit: "admin_editforums_edit.js",
+	profile: "profile.js",
+	forum_group: "forum_group.js",
+	myforums: "myforums.js",
+	members: "members.js",
+	search: "search.js",
+	inbox: "inbox.js",
+	compose_message: "compose_message.js",
+	view_message: "view_message.js"
 }
 
 for(i in pages){
-	global[i] = require("./pages/" + pages[i])
+	pages[i] = require("./backend/pages/" + pages[i])
 }
 
-cache_data = {
+var cache_data = {
 	announcement: ""
-}
+};
 
 var algorithm = "sha512WithRSAEncryption";
-encryptHash = function(pass, salt) {
+var encryptHash = function(pass, salt) {
 	if(!salt) {
 		var salt = crypto.randomBytes(10).toString("hex")
 	}
@@ -152,7 +203,7 @@ encryptHash = function(pass, salt) {
 	return hash;
 };
 
-checkHash = function(hash, pass) {
+var checkHash = function(hash, pass) {
 	if(typeof hash !== "string") return false;
 	hash = hash.split("@");
 	if(hash.length !== 2) return false;
@@ -160,7 +211,7 @@ checkHash = function(hash, pass) {
 	return encryptHash(pass, hash[0]) === hash.join("@");
 };
 
-parseCookie = function(cookie) {
+var parseCookie = function(cookie) {
 	try {
 		if(typeof cookie !== "string") {
 			return {};
@@ -213,7 +264,7 @@ function log(text, color) {
 	if(color) configureStyle(0)
 }
 
-cookieExpireDate = function(timestamp) {
+var cookieExpireDate = function(timestamp) {
 	var dayWeekList = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 	var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -229,8 +280,8 @@ cookieExpireDate = function(timestamp) {
 	return compile
 }
 
-var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-joindate_label = function(timestamp){
+var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var joindate_label = function(timestamp){
 	timestamp = parseInt(timestamp)
 	timestamp = new Date(timestamp)
 	
@@ -325,43 +376,43 @@ async function processCommand(cmd){
 }
 
 async function init_db() {
-	if(!await get("select * from sqlite_master where type='table' and name='info'")) {
+	if(!await db.get("select * from sqlite_master where type='table' and name='info'")) {
 		log("Creating tables...", "l_green")
 		
-		await run("create table info(name text, data text)")
+		await db.run("create table info(name text, data text)")
 		console.log("Created 'info'")
 		
-		await run("insert into info values('init', '')")
+		await db.run("insert into info values('init', '')")
 		console.log("Marked database as initialized")
 		
-		await run("insert into info values('announcement', 'No announcement')")
+		await db.run("insert into info values('announcement', 'No announcement')")
 		console.log("Added announcement")
 		
-		await run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)")
+		await db.run("create table forums('id' integer PRIMARY KEY, 'name' text, 'desc' text, 'date_created' integer, thread_count integer, post_count integer, _order integer, forum_group integer)")
 		console.log("Created 'forums'")
 		
-		await run("create table threads(id integer primary key, forum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)")
+		await db.run("create table threads(id integer primary key, forum integer, title text, body text, date_created integer, user integer, type integer, parent integer, thread integer, font integer, _order integer, deleted integer, views integer)")
 		console.log("Created 'threads'")
 		
-		await run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer, last_login integer)")
+		await db.run("create table users(id integer primary key, username text, password text, date_joined integer, posts integer, rank integer, last_login integer)")
 		console.log("Created 'users'")
 		
-		await run("create table session(user_id integer, expire_date integer, key text)")
+		await db.run("create table session(user_id integer, expire_date integer, key text)")
 		console.log("Created 'session'")
 		
-		await run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer, message_id integer)")
+		await db.run("create table views(user integer, date integer, type integer, max_readAll_id integer, post_id integer, forum_id integer, message_id integer)")
 		console.log("Created 'views'")
 		
-		await run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)")
+		await db.run("create table forum_groups(id integer PRIMARY KEY, name text, date_created integer, _order integer)")
 		console.log("Created 'forum_groups'")
 		
-		await run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1])
+		await db.run("INSERT INTO forum_groups VALUES (null, ?, ?, ?)", ["Main forums", Date.now(), 1])
 		console.log("Created 'Main forums' forum group")
 		
-		await run("create table tracking(user integer, thread integer, date integer)")
+		await db.run("create table tracking(user integer, thread integer, date integer)")
 		console.log("Created 'tracking'")
 		
-		await run("create table messages(id integer PRIMARY KEY, date integer, from_id integer, to_id integer, subject text, body text)")
+		await db.run("create table messages(id integer PRIMARY KEY, date integer, from_id integer, to_id integer, subject text, body text)")
 		console.log("Created 'messages'")
 		log("Table creation complete.", "l_green")
 		begin()
@@ -372,14 +423,14 @@ async function init_db() {
 init_db()
 
 async function begin(){
-	var anc = await get("select data from info where name='announcement'")
+	var anc = await db.get("select data from info where name='announcement'")
 	cache_data.announcement = anc.data
 	start_server()
 }
 
-var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-var _data_ago = ["minute", "hour", "day", "month", "year"]
-date_created = function(timestamp){
+var Month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var _data_ago = ["minute", "hour", "day", "month", "year"];
+var date_created = function(timestamp){
 	timestamp = parseInt(timestamp)
 	var raw_ts = timestamp
 	timestamp = new Date(timestamp)
@@ -437,9 +488,9 @@ res.setHeader("Expires", "0");
 */
 
 
-online_users = {}
+var online_users = {}
 
-setInterval(function(){
+/*setInterval(function(){
 	//check last activities
 	var Now = Date.now()
 	var Compare = Now - 1000 * 60 * 5 // in last 5 minutes
@@ -451,9 +502,9 @@ setInterval(function(){
 	}
 	//clear expired sessions
 	database.all("delete from session where expire_date <= ?", [Date.now()])
-}, 1000*60) // check every minute
+}, 1000*60) // check every minute*/
 
-function checkPosNumber(n){ // check positive number
+function checkPosNumber(n){
 	if(typeof n == "number" && !isNaN(n) && n !== Infinity) {
 		return n >= 0
 	}
@@ -476,35 +527,67 @@ function checkPosNumber(n){ // check positive number
 	return false
 }
 
-process.on('uncaughtException', function(err) {
-	if(err.errno === 'EADDRINUSE') {
-		console.log("The port " + port + " is already in use. The server cannot start")
+process.on("uncaughtException", function(err) {
+	if(err.errno === "EADDRINUSE") {
+		console.log("The port " + port + " is already in use. The server cannot start");
 	} else {
 		console.log(err)
 	}
 	process.exit()
 });
 
-var Images = {
-	"favicon.ico": ["image/png", "fav_icon"],
-	"images/bar.gif": ["image/gif", "bar"],
-	"images/barGray.gif": ["image/gif", "barGray"],
-	"images/bottom_bar.png": ["image/png", "bottom_bar"],
-	"images/sidebar.png": ["image/png", "sidebar"],
-	"images/offline.png": ["image/png", "offline"],
-	"images/online.png": ["image/png", "online"],
-	"images/thread.png": ["image/png", "thread"],
-	"images/thread_read.png": ["image/png", "thread_read"],
-	"images/expand.png": ["image/png", "expand"],
-	"images/collapse.png": ["image/png", "collapse"],
-	"images/forum.png": ["image/png", "forum"]
-}
+var url_regexp = [
+    [/^$/g, pages.main],
+
+    [/^sf\/(.*)$/g, pages.Forum],
+    [/^thread\/(.*)$/g, pages.thread],
+    [/^post\/(.*)$/g, pages.post],
+
+    [/^login$/g, pages.login],
+    [/^logout$/g, pages.logout],
+
+    [/^reply\/(.*)$/g, pages.reply],
+    [/^forum_group\/(.*)$/g, pages.forum_group],
+    [/^myforums\/(.*)$/g, pages.myforums],
+    [/^members$/g, pages.members],
+    [/^search$/g, pages.search],
+    [/^inbox$/g, pages.inbox],
+    [/^compose_message\/(.*)$/g, pages.compose_message],
+    [/^view_message\/(.*)$/g, pages.view_message],
+
+    [/^admin\/$/g, pages.admin],
+    [/^admin\/editannouncement\/$/g, pages.admin_editannouncement],
+    [/^admin\/editforums\/$/g, pages.admin_editforums],
+    [/^admin\/editforums\/(.*)$/g, pages.admin_editforums_edit],
+    [/^admin\/editforumgroups\/$/g, pages.admin_editforumgroups],
+    [/^admin\/editforumgroups\/(.*)$/g, pages.admin_editforumgroups_edit],
+    [/^admin\/createforum$/g, pages.admin_createforum],
+    [/^admin\/createforumgroup$/g, pages.admin_createforumgroup],
+
+    [/^profile\/(.*)$/g, pages.profile]
+];
+
 function InternalServerError(res) {
 	res.statusCode = 500;
 	res.end("(500) Internal server error")
 }
 function server_(req, res) {
-	$ = function(fc) {
+    var path = url.parse(req.url);
+    var pathname = path.pathname.substr(1);
+
+    for(var i = 0; i < url_regexp.length; i++) {
+        var row = url_regexp[i];
+        var regexp = row[0];
+        var obj = row[1];
+        if(pathname.match(regexp)) {
+            console.log(obj)
+            break;
+        }
+    }
+
+    console.log(pathname)
+
+	/*$ = function(fc) {
 		var args = []
 		for(var i = 1; i < arguments.length; i++) {
 			args.push(arguments[i])
@@ -716,7 +799,7 @@ function server_(req, res) {
 		}
 	}
 	
-	$(serve)
+	$(serve)*/
 }
 
 function start_server(){

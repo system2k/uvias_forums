@@ -1,5 +1,5 @@
-module.exports = async function(req, res) {
-	var cookie = req.headers.cookie
+module.exports.GET = async function(req, serve, vars) {
+    var cookie = req.headers.cookie
     cookie = parseCookie(cookie)
 	
 	var sid = cookie.sessionid
@@ -10,4 +10,8 @@ module.exports = async function(req, res) {
 		"Location": req.headers.referer
 	})
 	res.end()
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

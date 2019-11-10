@@ -1,7 +1,5 @@
-var threadsPerPage = 30;
-
-module.exports = async function(req, res, id, userinfo) {
-	var method = req.method.toLowerCase()
+module.exports.GET = async function(req, serve, vars) {
+    var method = req.method.toLowerCase()
 	var page = 1;
 	
 	id = id.split("/")
@@ -249,3 +247,9 @@ module.exports = async function(req, res, id, userinfo) {
 		}
 	}
 }
+
+module.exports.POST = async function(req, serve, vars) {
+    
+}
+
+var threadsPerPage = 30;

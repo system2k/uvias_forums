@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo, id) {
-	var tmp = swig.compileFile("./src/html/forum_group.html")
+module.exports.GET = async function(req, serve, vars) {
+    var tmp = swig.compileFile("./src/html/forum_group.html")
 	
 	var forum_group;
 	var f_g = await get("select * from forum_groups where id=?", id)
@@ -20,4 +20,8 @@ module.exports = async function(req, res, userinfo, id) {
 		res.write(output)
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }

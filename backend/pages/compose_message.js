@@ -1,5 +1,5 @@
-module.exports = async function(req, res, userinfo, id){
-	if(userinfo.logged_in) {
+module.exports.GET = async function(req, serve, vars) {
+    if(userinfo.logged_in) {
 		var method = req.method.toLowerCase()
 		
 		if(method === "get") {
@@ -61,4 +61,8 @@ module.exports = async function(req, res, userinfo, id){
 	} else {
 		res.end()
 	}
+}
+
+module.exports.POST = async function(req, serve, vars) {
+    
 }
