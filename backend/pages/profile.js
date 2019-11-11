@@ -1,28 +1,27 @@
-module.exports.GET = async function(req, serve, vars) {
-    var method = req.method.toLowerCase()
-	
-	if(method == "get"){
-		var tmp = swig.compileFile("./src/html/profile.html")
-		
-		var b = await get("select * from users where id=?", id)
-		if(b === undefined) {
-			res.end("User does not exist")
-		} else {
-			var output = tmp(Object.assign({
-				pf_username: b.username,
-				posts: b.posts,
-				joindate: date_created(b.date_joined),
-				rank: b.rank,
-				last_login: date_created(b.last_login),
-				user: b
-			}, userinfo));
-			
-			res.write(output)
-			res.end()
-		}
-	}
-}
+module.exports.GET = async function(req, serve, vars, evars) {
+    var swig = vars.swig;
+    var db = vars.db;
+    var userinfo = evars.userinfo;
+    var urlSegmentIndex = vars.urlSegmentIndex;
+    var date_created = vars.date_created;
 
-module.exports.POST = async function(req, serve, vars) {
+    var tmp = swig.compileFile("./frontend/templates/profile.html")
     
+    var id = urlSegmentIndex(req.url, 1);
+    
+    var b = await db.get("select * from users where id=?", id)
+    if(!b) {
+        return serve ("User does not exist")
+    } else {
+        var output = tmp(Object.assign({
+            pf_username: b.username,
+            posts: b.posts,
+            joindate: date_created(b.date_joined),
+            rank: b.rank,
+            last_login: date_created(b.last_login),
+            user: b
+        }, userinfo));
+        
+        serve(output)
+    }
 }

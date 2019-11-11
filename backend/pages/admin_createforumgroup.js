@@ -1,11 +1,8 @@
-module.exports.GET = async function(req, serve, vars) {
-    var tmp = swig.compileFile("./src/html/admin_createforumgroup.html")
-	
-	var output = tmp(userinfo);
-	res.write(output)
-	res.end()
-}
+module.exports.GET = async function(req, serve, vars, evars) {
+    var swig = vars.swig;
+    var userinfo = evars.userinfo;
 
-module.exports.POST = async function(req, serve, vars) {
-    
+    var tmp = swig.compileFile("./frontend/templates/admin_createforumgroup.html")
+	var output = tmp(userinfo);
+	serve(output)
 }

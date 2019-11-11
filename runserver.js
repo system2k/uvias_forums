@@ -178,11 +178,11 @@ var pages = {
 	profile: "profile.js",
 	forum_group: "forum_group.js",
 	myforums: "myforums.js",
-	members: "members.js",
 	search: "search.js",
 	inbox: "inbox.js",
 	compose_message: "compose_message.js",
-	view_message: "view_message.js"
+    view_message: "view_message.js",
+    static: "static.js"
 }
 
 for(i in pages){
@@ -354,16 +354,16 @@ async function processCommand(cmd){
 		console.log("Adding data...")
 		
 		var date_now = Date.now()
-		await run("insert into users values(null, ?, ?, ?, 0, 2, ?)", ["Admin", encryptHash("admin"), date_now, date_now])
+		await db.run("insert into users values(null, ?, ?, ?, 0, 2, ?)", ["Admin", encryptHash("admin"), date_now, date_now])
 		.catch(function(){log("An error occured while creating the admin account:", "l_red");console.log(e)})
 		log("Added admin account successfully (username: admin, password: admin)", "l_green")
 		
-		await run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1])
+		await db.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1])
 		.catch(function(){log("An error occured while creating sample forum #1:", "red");console.log(e)})
 		log("Added sample forum #1 successfully", "l_green")
 		
 		
-		await run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2])
+		await db.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2])
 		.catch(function(){log("An error occured while creating sample forum #2:", "l_red");console.log(e)})
 		log("Added sample forum #2 successfully", "l_green")
 		
@@ -413,7 +413,30 @@ async function init_db() {
 		console.log("Created 'tracking'")
 		
 		await db.run("create table messages(id integer PRIMARY KEY, date integer, from_id integer, to_id integer, subject text, body text)")
-		console.log("Created 'messages'")
+        console.log("Created 'messages'")
+        
+
+
+
+        console.log("Adding sample data...")
+		
+		var date_now = Date.now()
+		await db.run("insert into users values(null, ?, ?, ?, 0, 2, ?)", ["Admin", encryptHash("admin"), date_now, date_now])
+		.catch(function(){log("An error occured while creating the admin account:", "l_red");console.log(e)})
+		log("Added admin account successfully (username: admin, password: admin)", "l_green")
+		
+		await db.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 1", "Sample forum generated automatically using the console", date_now, 1])
+		.catch(function(){log("An error occured while creating sample forum #1:", "red");console.log(e)})
+		log("Added sample forum #1 successfully", "l_green")
+		
+		
+		await db.run("INSERT INTO forums VALUES (null, ?, ?, ?, 0, 0, ?, 1)", ["Forum 2", "Another forum generated automatically using the console", date_now, 2])
+		.catch(function(){log("An error occured while creating sample forum #2:", "l_red");console.log(e)})
+		log("Added sample forum #2 successfully", "l_green")
+		
+		console.log("Sample data creation complete.")
+
+
 		log("Table creation complete.", "l_green")
 		begin()
 	} else {
@@ -539,53 +562,156 @@ process.on("uncaughtException", function(err) {
 var url_regexp = [
     [/^$/g, pages.main],
 
-    [/^sf\/(.*)$/g, pages.Forum],
-    [/^thread\/(.*)$/g, pages.thread],
-    [/^post\/(.*)$/g, pages.post],
+    [/^sf\/(.*)[\/]?$/g, pages.Forum],
+    [/^thread\/(.*)[\/]?$/g, pages.thread],
+    [/^post\/(.*)[\/]?$/g, pages.post],
 
-    [/^login$/g, pages.login],
-    [/^logout$/g, pages.logout],
+    [/^login[\/]?$/g, pages.login],
+    [/^logout[\/]?$/g, pages.logout],
 
-    [/^reply\/(.*)$/g, pages.reply],
-    [/^forum_group\/(.*)$/g, pages.forum_group],
-    [/^myforums\/(.*)$/g, pages.myforums],
-    [/^members$/g, pages.members],
-    [/^search$/g, pages.search],
-    [/^inbox$/g, pages.inbox],
-    [/^compose_message\/(.*)$/g, pages.compose_message],
-    [/^view_message\/(.*)$/g, pages.view_message],
+    [/^reply\/(.*)[\/]?$/g, pages.reply],
+    [/^forum_group\/(.*)[\/]?$/g, pages.forum_group],
+    [/^myforums[\/]?$/g, pages.myforums],
+    [/^search[\/]?$/g, pages.search],
+    [/^inbox[\/]?$/g, pages.inbox],
+    [/^compose_message\/(.*)[\/]?$/g, pages.compose_message],
+    [/^view_message\/(.*)[\/]?$/g, pages.view_message],
 
-    [/^admin\/$/g, pages.admin],
-    [/^admin\/editannouncement\/$/g, pages.admin_editannouncement],
-    [/^admin\/editforums\/$/g, pages.admin_editforums],
-    [/^admin\/editforums\/(.*)$/g, pages.admin_editforums_edit],
-    [/^admin\/editforumgroups\/$/g, pages.admin_editforumgroups],
-    [/^admin\/editforumgroups\/(.*)$/g, pages.admin_editforumgroups_edit],
-    [/^admin\/createforum$/g, pages.admin_createforum],
-    [/^admin\/createforumgroup$/g, pages.admin_createforumgroup],
+    [/^admin[\/]?$/g, pages.admin],
+    [/^admin\/editannouncement[\/]?$/g, pages.admin_editannouncement],
+    [/^admin\/editforums[\/]?$/g, pages.admin_editforums],
+    [/^admin\/editforums\/(.*)[\/]?$/g, pages.admin_editforums_edit],
+    [/^admin\/editforumgroups[\/]?$/g, pages.admin_editforumgroups],
+    [/^admin\/editforumgroups\/(.*)[\/]?$/g, pages.admin_editforumgroups_edit],
+    [/^admin\/createforum[\/]?$/g, pages.admin_createforum],
+    [/^admin\/createforumgroup[\/]?$/g, pages.admin_createforumgroup],
 
-    [/^profile\/(.*)$/g, pages.profile]
+    [/^static\/(.*)[\/]?$/g, pages.static],
+
+    [/^profile\/(.*)[\/]?$/g, pages.profile]
 ];
+
+function urlSegmentIndex(url, idx) {
+    if(url.charAt(0) == "/") url = url.substr(1);
+    url = url.split("/");
+    return url[idx];
+}
+
+function handle_error(e) {
+    console.log(e)
+}
+
+function wait_response_data(req, res) {
+    var sizeLimit = 1000000;
+    var queryData = "";
+    var error = false;
+    return new Promise(function(resolve) {
+        req.on("data", function(data) {
+            if(error) return;
+            try {
+                if(data.length <= 250000) { // limit of individual packets
+                    queryData += data;
+                }
+                if (queryData.length > sizeLimit) { // hard limit
+                    queryData = "";
+                    res.writeHead(413);
+                    res.end("Payload too large");
+                    error = true;
+                    resolve(null);
+                }
+            } catch(e) {
+                handle_error(e);
+            }
+        });
+        req.on("end", function() {
+            if(error) return;
+            try {
+                resolve(querystring.parse(queryData, null, null, { maxKeys: 256 }));
+            } catch(e) {
+                resolve(null);
+            }
+        });
+    });
+}
+
+var global_vars = {
+    swig,
+    db,
+    url,
+    static_data,
+    urlSegmentIndex,
+    date_created,
+    parseCookie,
+    cookieExpireDate,
+    postsPerPage,
+    joindate_label,
+    online_users,
+    querystring
+};
 
 function InternalServerError(res) {
 	res.statusCode = 500;
 	res.end("(500) Internal server error")
 }
-function server_(req, res) {
+async function server_(req, res) {
     var path = url.parse(req.url);
     var pathname = path.pathname.substr(1);
 
+    function serve(data) {
+        if(!data) data = "";
+        res.end(data);
+    }
+
+    var found = false;
     for(var i = 0; i < url_regexp.length; i++) {
         var row = url_regexp[i];
         var regexp = row[0];
         var obj = row[1];
         if(pathname.match(regexp)) {
-            console.log(obj)
+            var method = req.method;
+            var resdata;
+            var userinfo = {
+                sid: "123456789",
+                user_id: 1,
+                logged_in: true,
+                top_rank: true,
+                page_path: path.href,
+                cookie: parseCookie(req.headers.cookie),
+                announcement: cache_data.announcement,
+                username: "Admin",
+                inbox_unread: 0
+            };
+            if(method == "GET" && obj.GET) {
+                resdata = await obj.GET(req, serve, global_vars, {
+                    userinfo,
+                    res
+                });
+                found = true;
+            } else if(method == "POST" && obj.POST) {
+                var pdata = await wait_response_data(req, res);
+                if(!pdata) pdata = {};
+                resdata = await obj.POST(req, serve, global_vars, {
+                    pdata,
+                    userinfo,
+                    res
+                });
+                found = true;
+            } else if(method == "DELETE" && obj.DELETE) {
+                resdata = await obj.DELETE(req, serve, global_vars, {
+                    userinfo,
+                    res
+                });
+                found = true;
+            } else {
+                return res.end("Invalid method");
+            }
             break;
         }
     }
 
-    console.log(pathname)
+    if(!found) {
+        return res.end("404");
+    }
 
 	/*$ = function(fc) {
 		var args = []
@@ -665,145 +791,18 @@ function server_(req, res) {
 				announcement: cache_data.announcement
 			}
 			comp()
-		}
-		
-		// get page from url
-		function comp(){
-			if(Images[pathname]) {
-				res.writeHead(200, {
-					"Content-Type": Images[pathname][0]
-				})
-				res.end(pre_loaded_images[Images[pathname][1]], "binary");
-				
-			} else if(pathname == "") {
-				$(page_main, req, res, userinfo)
-				
-			} else if(pathname == "scripts/adminpanel.js") {
-				if(userinfo.top_rank === false){
-					res.writeHead(302, {
-						"Location": "scripts/adminpanel.js"
-					})
-					res.end()
-				}
-				if(userinfo.top_rank === true){
-					res.writeHead(200, {
-						"Content-Type": "application/javascript"
-					})
-					res.end(pre_loaded_content["adminpanel"], "binary");
-				}
-				
-			} else if(pathname.startsWith("sf/")){
-				$(page_Forum, req, res, pathname.substr("sf/".length), userinfo)
-				
-			} else if(pathname.startsWith("thread/")) {
-				$(page_thread, req, res, pathname.substr("thread/".length), userinfo)
-				
-			} else if(pathname == "register") {
-				$(page_register, req, res, userinfo)
-				
-			} else if(pathname.startsWith("post/")) {
-				$(page_post, req, res, pathname.substr("post/".length), userinfo)
-				
-			} else if(pathname == "login"){
-				$(page_login, req, res, userinfo)
-				
-			} else if(pathname == "logout"){
-				$(page_logout, req, res)
-				
-			} else if(pathname.startsWith("reply/")){
-				$(page_reply, req, res, pathname.substr("reply/".length), userinfo)
-				
-			} else if(pathname.startsWith("forum_group/")) {
-				var id = pathname.substr("forum_group/".length)
-				$(page_forum_group, req, res, userinfo, id)
-				
-			} else if(pathname.startsWith("myforums")) {
-				$(page_myforums, req, res, userinfo)
-				
-			} else if(pathname == "members") {
-				$(page_members, req, res, userinfo)
-				
-			} else if(pathname == "search") {
-				$(page_search, req, res, userinfo)
-				
-			} else if(pathname == "inbox") {
-				$(page_inbox, req, res, userinfo)
-				
-			} else if(pathname.startsWith("compose_message/")) {
-				var id = pathname.substr("compose_message/".length)
-				$(page_compose_message, req, res, userinfo, id)
-				
-			} else if(pathname.startsWith("view_message/")) {
-				var id = pathname.substr("view_message/".length)
-				$(page_view_message, req, res, userinfo, id)
-				
-			} else if(pathname.startsWith("admin")) {
-				pathname = pathname.substr(5)
-				if(userinfo.top_rank === false){
-					res.writeHead(302, {
-						"Location": "/admin"
-					})
-					res.end()
-				}
-				if(userinfo.top_rank === true){
-					if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
-					
-					if(pathname == ""){
-						$(page_admin, req, res, userinfo)
-						
-					} else if(pathname == "editannouncement") {
-						$(page_admin_editannouncement, req, res, userinfo)
-						
-					} else if(pathname.startsWith("editforums")) {
-						pathname = pathname.substr("editforums".length)
-						if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
-					
-						if(pathname == "") {
-							$(page_admin_editforums, req, res, userinfo)
-						} else if(checkPosNumber(pathname)) {
-							$(page_admin_editforums_edit, req, res, userinfo, pathname)
-						} else {
-							res.end("")
-						}
-						
-						
-					} else if(pathname.startsWith("editforumgroups")) {
-						pathname = pathname.substr("editforumgroups".length)
-						if(pathname.charAt(0) == "/") pathname = pathname.substr(1)
-						if(pathname == "") {
-							$(page_admin_editforumgroups, req, res, userinfo)
-						} else if(checkPosNumber(pathname)) {
-							$(page_admin_editforumgroups_edit, req, res, userinfo, pathname)
-						} else {
-							res.end("")
-						}
-						
-					} else if(pathname == "createforum") {
-						$(page_admin_createforum, req, res, userinfo)
-						
-					} else if(pathname == "createforumgroup") {
-						$(page_admin_createforumgroup, req, res, userinfo)
-						
-					} else {
-						res.end("")
-					}
-				}
-				
-			} else if(pathname.startsWith("profile/")) {
-				$(page_profile, req, res, pathname.substr("profile/".length), userinfo)
-				
-			} else {
-				res.statusCode = 404;
-				res.end("(404) Page does not exist")
-			}
-		}
-	}
-	
-	$(serve)*/
+		}*/
 }
 
 function start_server(){
-	var server = http.createServer(server_)
+	var server = http.createServer(async function(req, res) {
+        try {
+            await server_(req, res);
+        } catch(e) {
+            console.log(e)
+            return res.end("500 internal server error");
+        }
+    })
 	server.listen(port, function() {
 		var addr = server.address();
 		console.log("Server listening on port: " + addr.port + ". Address: " + addr.address + ":" + addr.port)

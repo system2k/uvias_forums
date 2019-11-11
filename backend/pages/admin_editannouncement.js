@@ -1,12 +1,9 @@
-module.exports.GET = async function(req, serve, vars) {
-    var tmp = swig.compileFile("./src/html/admin_editannouncement.html")
-	
+module.exports.GET = async function(req, serve, vars, evars) {
+    var swig = vars.swig;
+    var userinfo = evars.userinfo;
+
+    var tmp = swig.compileFile("./frontend/templates/admin_editannouncement.html")
 	var output = tmp(Object.assign({
 	}, userinfo));
-	res.write(output)
-	res.end()
-}
-
-module.exports.POST = async function(req, serve, vars) {
-    
+	serve(output)
 }

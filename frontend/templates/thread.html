@@ -22,7 +22,7 @@
 	<table class="defaultTable" style="font-family: initial;">
 		<tbody>
 			<tr>
-				<td style="text-align: right; background-image: url('/images/barGray.gif');" colspan="2">
+				<td style="text-align: right; background-image: url('/static/img/barGray.gif');" colspan="2">
 					<label>&lt&lt</label> <a href="/thread/{{prevThread}}" class="control">Previous</a> | <a href="/thread/{{nextThread}}" class="control">Next</a> <label>&gt&gt</label>
 				</td>
 			</tr>
@@ -39,9 +39,9 @@
 			<tr style="height: 145px;">
 				<td style="vertical-align:top; width: 180px; background-color: #{% if label.alternate == 0 %}6fb7ff{% else %}95caff{% endif %}; word-break: break-all; font-size: 13px; padding: 3px;">
 					{% if label.online %}
-					<img src="/images/online.png" alt="User {{label.username}} is online">
+					<img src="/static/img/online.png" alt="User {{label.username}} is online">
 					{% else %}
-					<img src="/images/offline.png" alt="User {{label.username}} is offline">
+					<img src="/static/img/offline.png" alt="User {{label.username}} is offline">
 					{% endif %}
 					<b><a href="/profile/{{label.userid}}" style="font-size: 15px">{{label.username}}</a></b>
 					<br>
@@ -102,7 +102,7 @@
 					</td>
 					{% endif %}
 					<td style="width: 1px; vertical-align: top">
-						<img src="/images/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})" style="margin-right: 3px;{% if label.children_count == 0 %} visibility: hidden;{% endif %}" alt="Collapse or expand comment">
+						<img src="/static/img/collapse.png" onclick="javascript:col({{label.index}},{{label.id}},{{label.parent}},{{label.threshold}})" style="margin-right: 3px;{% if label.children_count == 0 %} visibility: hidden;{% endif %}" alt="Collapse or expand comment">
 					</td>
 					<td>
 						<div style="width: 100%">
@@ -238,10 +238,10 @@
 			var imgPos = 0; // which column the collapse/expand icon is on
 			if(index != 0) imgPos = 1
 			if(!coll) {
-				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/expand.png"
+				posts[index].children[0].children[0].children[imgPos].children[0].src = "/static/img/expand.png"
 				collapsed[index] = 1
 			} else {
-				posts[index].children[0].children[0].children[imgPos].children[0].src = "/images/collapse.png"
+				posts[index].children[0].children[0].children[imgPos].children[0].src = "/static/img/collapse.png"
 			}
 			while(true){ // iterate over all posts, starting at the collapsed post
 				var dat = posts[c_idx].id.split(":") // get data of the post
@@ -294,7 +294,7 @@
 				var threshold = parseInt(dat[2])
 				
 				var img = posts[i].children[0].children[0].children[imgPos].children[0]
-				img.src = "/images/collapse.png"
+				img.src = "/static/img/collapse.png"
 				
 				postIndex.push([i, id, parent, threshold])
 				

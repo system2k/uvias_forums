@@ -1,4 +1,4 @@
-module.exports.GET = async function(req, serve, vars) {
+module.exports.GET = async function(req, serve, vars, evars) {
     var method = req.method.toLowerCase()
 	
 	if(method == "get") {
@@ -62,7 +62,7 @@ module.exports.GET = async function(req, serve, vars) {
 	}
 }
 
-module.exports.POST = async function(req, serve, vars) {
+module.exports.POST = async function(req, serve, vars, evars) {
     
 }
 

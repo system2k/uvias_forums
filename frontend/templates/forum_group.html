@@ -19,14 +19,14 @@
 			</tr>
 			
 			<tr>
-				<td colspan="4" style="background-image: url('/images/barGray.gif');">
+				<td colspan="4" style="background-image: url('/static/img/barGray.gif');">
 					<a style="font-family: 'Verdana'; font-size: 13px; min-height: 20px;" class="rowText" href="/forum_group/{{forum_group.id}}">{{forum_group.name}}</a>
 				</td>
 			</tr>
 			{% for forum in forums %}
 				<tr style="height: 50px;">
 					<td style="width: 30px; background-color: #cee7ff;">
-						<img src="/images/forum.png" alt="Forum">
+						<img src="/static/img/forum.png" alt="Forum">
 					</td>
 					<td style="background-color: #b9dcff;">
 						<a href="/sf/{{forum.id}}" class="rowText">{{forum.name}}</a>

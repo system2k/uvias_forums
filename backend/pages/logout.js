@@ -1,4 +1,8 @@
-module.exports.GET = async function(req, serve, vars) {
+module.exports.GET = async function(req, serve, vars, evars) {
+    console.log("Logout")
+    /*var cookieExpireDate = vars.cookieExpireDate;
+    var parseCookie = vars.parseCookie;
+
     var cookie = req.headers.cookie
     cookie = parseCookie(cookie)
 	
@@ -9,9 +13,5 @@ module.exports.GET = async function(req, serve, vars) {
 		"Set-Cookie": "sessionid=; expires=" + cookieExpireDate(0) + ";",
 		"Location": req.headers.referer
 	})
-	res.end()
-}
-
-module.exports.POST = async function(req, serve, vars) {
-    
+	res.end()*/
 }

@@ -1,62 +1,57 @@
-module.exports.GET = async function(req, serve, vars) {
-    var method = req.method.toLowerCase()
-	
-	if(method == "get") {
-		var tmp = swig.compileFile("./src/html/login.html")
-		
-		var output = tmp(Object.assign({
-			login_page: true
-		}, userinfo));
-		
-		res.write(output)
-		res.end()
-	}
-	
-	if(method == "post") {
-		var queryData = "";
-		var error = false;
-		req.on('data', function(data) {
-            queryData += data;
-            if (queryData.length > 1000000) {
-                queryData = "";
-				res.end("")
-                error = true
-                req.connection.destroy();
-            }
-        });
-		if(!error){
-			req.on('end', async function(){
-				var data = querystring.parse(queryData)
-				
-				var user = data.user;
-				var pass = data.pass;
-				
-				var b = await get("select * from users where username=? collate nocase", user)
-				if(b !== undefined){
-					var chkpass = b.password;
-					if(checkHash(chkpass, pass)){
-						var tkn = token(32)
-						var expires = Date.now() + Month*2
-						await run("insert into session values(?, ?, ?)", [b.id, expires, tkn])
-						await run("update users set last_login=? where id=?", [Date.now(), b.id])
-						res.writeHead(302, {
-							"Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
-							"Location": "/"
-						})
-						res.end()
-					} else {
-						res.end("User does not exist or password is wrong")
-					}
-				} else {
-					res.end("User does not exist or password is wrong")
-				}
-			});
-		}
-	}
+module.exports.GET = async function(req, serve, vars, evars) {
+    var swig = vars.swig;
+    var userinfo = evars.userinfo;
+
+	var tmp = swig.compileFile("./frontend/templates/login.html")
+    
+    var output = tmp(Object.assign({
+        login_page: true
+    }, userinfo));
+    
+    serve(output)
 }
 
-module.exports.POST = async function(req, serve, vars) {
-    
+module.exports.POST = async function(req, serve, vars, evars) {
+    console.log(evars.pdata)
+    /*var queryData = "";
+    var error = false;
+    req.on('data', function(data) {
+        queryData += data;
+        if (queryData.length > 1000000) {
+            queryData = "";
+            res.end("")
+            error = true
+            req.connection.destroy();
+        }
+    });
+    if(!error){
+        req.on('end', async function(){
+            var data = querystring.parse(queryData)
+            
+            var user = data.user;
+            var pass = data.pass;
+            
+            var b = await get("select * from users where username=? collate nocase", user)
+            if(b !== undefined){
+                var chkpass = b.password;
+                if(checkHash(chkpass, pass)){
+                    var tkn = token(32)
+                    var expires = Date.now() + Month*2
+                    await run("insert into session values(?, ?, ?)", [b.id, expires, tkn])
+                    await run("update users set last_login=? where id=?", [Date.now(), b.id])
+                    res.writeHead(302, {
+                        "Set-Cookie": "sessionid=" + tkn + "; expires=" + cookieExpireDate(expires) + ";",
+                        "Location": "/"
+                    })
+                    res.end()
+                } else {
+                    res.end("User does not exist or password is wrong")
+                }
+            } else {
+                res.end("User does not exist or password is wrong")
+            }
+        });
+    }*/
 }
 
 var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

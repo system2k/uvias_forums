@@ -1,27 +1,26 @@
-module.exports.GET = async function(req, serve, vars) {
-    var tmp = swig.compileFile("./src/html/forum_group.html")
+module.exports.GET = async function(req, serve, vars, evars) {
+    var swig = vars.swig;
+    var db = vars.db;
+    var userinfo = evars.userinfo;
+    var urlSegmentIndex = vars.urlSegmentIndex;
+
+    var tmp = swig.compileFile("./frontend/templates/forum_group.html")
+
+    var id = urlSegmentIndex(req.url, 1);
 	
 	var forum_group;
-	var f_g = await get("select * from forum_groups where id=?", id)
+	var f_g = await db.get("select * from forum_groups where id=?", id)
 	if(f_g){
 		forum_group = f_g
-		done()
-	} else {
-		res.end("Invalid forum group id.")
-	}
-	
-	async function done(){
-		var b = await all("select * from forums where forum_group=? order by _order", id)
+        
+        var b = await db.all("select * from forums where forum_group=? order by _order", id)
 		var output = tmp(Object.assign({
 			forums: b,
 			forum_group: forum_group
 		}, userinfo));
 		
-		res.write(output)
-		res.end()
+		serve(output)
+	} else {
+		serve("Invalid forum group id.")
 	}
-}
-
-module.exports.POST = async function(req, serve, vars) {
-    
 }
